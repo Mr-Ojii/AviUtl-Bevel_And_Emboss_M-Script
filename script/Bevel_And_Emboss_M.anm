@@ -1,0 +1,12 @@
+--track0:α閾値,1,254,206,1
+--track1:幅,0,150,20
+--track2:角度,-360,360,60
+--track3:高度,0,90,0
+--dialog:スタイル[0-15],local style=1;ぼかし,local blur=0;ハイライト色/col,local col1=0xffffff;合成モード,local ble1=4;不透明度,local alp1=100;シャドウ色/col,local col2=0x000000;合成モード,local ble2=3;不透明度,local alp2=100;背景色/col,local bgcol=0x808080;参照輪郭ぼかし,local preblur=2;直線判定閾値,local isline=0.1;
+
+col1 = col1 or 0xffffff
+col2 = col2 or 0x000000
+bgcol = bgcol or 0x808080
+
+local bevel_and_emboss = require("Bevel_And_Emboss_M")
+bevel_and_emboss.Bevel_And_Emboss(obj.track0, obj.track1, obj.track2, obj.track3, style, blur, col1, ble1, alp1, col2, ble2, alp2, bgcol, preblur, isline)
