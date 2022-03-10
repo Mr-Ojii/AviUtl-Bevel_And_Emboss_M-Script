@@ -108,18 +108,24 @@ inline void setObjField(lua_State* L, ObjField obj) {
     lua_setfield(L, -2, "aspect");
 }
 
+inline double rad(double deg) {
+    return deg * 3.1415926535897932384626433832795028841971 / 180.0;
+}
+
+inline double squared(double num) {
+    //std::pow(x, 2)は遅い
+    return num * num;
+}
+
 //点[x,y]から最も近い線分[x0,y0]:[x0+dx,y0+dy]上の点の、距離の2乗と座標を返す関数
 inline std::tuple<double, double, double> distance_line(double x, double y, double x0, double y0, double dx, double dy)
 {
     //t<=0については、次のループで上書きされるので計算の必要無し
     double t = std::min(1.0, (dx * (x - x0) + dy * (y - y0)) / (dx * dx + dy * dy));
     //そもそもt<=0となるピクセルはifで弾いてる
-    return std::make_tuple(std::abs((x0 + dx * t - x) * (x0 + dx * t - x) + (y0 + dy * t - y) * (y0 + dy * t - y)), x0 + dx * t, y0 + dy * t);
+    return std::make_tuple(std::abs(squared(x0 + dx * t - x) + squared(y0 + dy * t - y)), x0 + dx * t, y0 + dy * t);
 }
 
-inline double rad(double deg) {
-    return deg * 3.1415926535897932384626433832795028841971 / 180.0;
-}
 
 int bevel_and_emboss(lua_State *L) {
     int a_th = lua_tointeger(L, 1);
@@ -172,6 +178,8 @@ int bevel_and_emboss(lua_State *L) {
         lua_call(L, 9, 0);
     }
 
+    //"getpixeldata"でw,hとれるじゃん！
+    //と思ったが、exedit.auf側で例外が発生する例があるので、getpixelを呼ぶ
     lua_getfield(L, -1, "getpixel");
     lua_call(L, 0, 2);
     int w = lua_tointeger(L, -2);
@@ -320,7 +328,7 @@ int bevel_and_emboss(lua_State *L) {
         double bufx = p[i][0].x, bufy = p[i][0].y;
         for(int j = 1; j < p[i].size(); j++) {
             double x = p[i][j].x, y = p[i][j].y;
-            if(std::pow(x * 2 - bufx - p[i][(j + 1) % p[i].size()].x, 2)+std::pow(y * 2 - bufy - p[i][(j + 1) % p[i].size()].y, 2) < hoge) {
+            if(squared(x * 2 - bufx - p[i][(j + 1) % p[i].size()].x) + squared(y * 2 - bufy - p[i][(j + 1) % p[i].size()].y) < hoge) {
                 p[i][j].x = x / 2 + bufx / 4 + p[i][(j + 1) % p[i].size()].x / 4;
                 p[i][j].y = y / 2 + bufy / 4 + p[i][(j + 1) % p[i].size()].y / 4;
             }
