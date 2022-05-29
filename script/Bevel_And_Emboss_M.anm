@@ -1,8 +1,8 @@
---track0:ѓїи‡’l,1,254,206,1
---track1:•ќ,0,150,20
---track2:Љp“x,-360,360,60
---track3:Ќ‚“x,0,90,0
---dialog:ѓXѓ^ѓCѓ‹[0-15],local style=1;‚Ъ‚©‚µ,local blur=0;ѓnѓCѓ‰ѓCѓgђF/col,local col1=0xffffff;Ќ‡ђ¬ѓ‚Ѓ[ѓh,local ble1=4;•s“§–ѕ“x,local alp1=100;ѓVѓѓѓhѓEђF/col,local col2=0x000000;Ќ‡ђ¬ѓ‚Ѓ[ѓh,local ble2=3;•s“§–ѕ“x,local alp2=100;”wЊiђF/col,local bgcol=0x808080;ЋQЏЖ—ЦЉs‚Ъ‚©‚µ,local preblur=2;’јђь”»’ии‡’l,local isline=0.1;
+--track0:О±й–ѕеЂ¤,1,254,206,1
+--track1:е№…,0,150,20
+--track2:и§’еє¦,-360,360,60
+--track3:й«еє¦,0,90,0
+--dialog:г‚№г‚їг‚¤гѓ«[0-15],local style=1;гЃјгЃ‹гЃ—,local blur=0;гѓЏг‚¤гѓ©г‚¤гѓ€и‰І/col,local col1=0xffffff;еђ€ж€ђгѓўгѓјгѓ‰,local ble1=4;дёЌйЂЏжЋеє¦,local alp1=100;г‚·гѓЈгѓ‰г‚¦и‰І/col,local col2=0x000000;еђ€ж€ђгѓўгѓјгѓ‰,local ble2=3;дёЌйЂЏжЋеє¦,local alp2=100;иѓЊж™Їи‰І/col,local bgcol=0x808080;еЏ‚з…§ијЄйѓ­гЃјгЃ‹гЃ—,local preblur=2;з›ґз·ље€¤е®љй–ѕеЂ¤,local isline=0.1;
 
 col1 = col1 or 0xffffff
 col2 = col2 or 0x000000
