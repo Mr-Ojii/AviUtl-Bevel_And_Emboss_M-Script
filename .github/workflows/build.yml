@@ -1,0 +1,78 @@
+name: Build
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download lua
+      shell: pwsh
+      run: |
+        Invoke-WebRequest https://www.lua.org/ftp/lua-5.1.5.tar.gz -OutFile "lua-5.1.5.tar.gz"
+        7z x "lua-5.1.5.tar.gz"
+        7z x "lua-5.1.5.tar"
+
+    - uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x86
+        
+    - uses: leafo/gh-actions-lua@v10
+      with:
+        luaVersion: 5.1.5
+
+    - name: Build Bevel_And_Emboss_M
+      run: |
+        cd ${{ github.workspace }}
+        cmake -S dll_src -B dll_src/build -DCMAKE_GENERATOR_PLATFORM=Win32 -DLUA51_INCLUDE_DIR=${{ github.workspace }}/.lua/include -DLUA51_LIBRARY_DIR=${{ github.workspace }}/.lua/lib
+        cmake --build dll_src/build --config Release
+
+    - name: Create Archive
+      shell: pwsh
+      run: |
+        cd ${{ github.workspace }}
+        mkdir pub
+        cp lua-5.1.5/COPYRIGHT pub/Lua-license.txt
+        cp dll_src/build/Release/Bevel_And_Emboss_M.dll pub
+        cp script/Bevel_And_Emboss_M.anm pub
+        cp LICENSE.txt pub
+        cp Readme.md pub
+        cd pub
+        7z a Bevel_And_Emboss_M.zip *
+        
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Bevel_And_Emboss_M
+        path: ${{ github.workspace }}/pub/Bevel_And_Emboss_M.zip
+        
+  create_release:
+    name: Create release
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - uses: actions/download-artifact@v3
+      with:
+        name: Bevel_And_Emboss_M
+        path: artifacts
+    
+    - name: Create a Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        REVCOUNT=`git rev-list --count HEAD`
+        RELEASE_NAME=r${REVCOUNT}
+        TAG_NAME=r${REVCOUNT}
+        gh release create "${TAG_NAME}" ${{ github.workspace }}/artifacts/*.zip -t "${RELEASE_NAME}" 
+        
