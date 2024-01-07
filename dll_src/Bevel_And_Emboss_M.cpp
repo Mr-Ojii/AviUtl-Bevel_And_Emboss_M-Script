@@ -323,8 +323,8 @@ int bevel_and_emboss(lua_State *L) {
                 //vector.eraseは割と重いけど致し方なし
                 p[i].erase(p[i].begin() + j);
             } else {
-                double dx = std::max(-1.0, std::min(1.0, a6 < a_th ? (a5 - a_th) / (a5 - a6) : a4 < a_th ? (a5 - a_th) / (a4 - a5) : 0.0));
-                double dy = std::max(-1.0, std::min(1.0, a2 < a_th ? (a5 - a_th) / (a5 - a2) : a8 < a_th ? (a5 - a_th) / (a8 - a5) : 0.0));
+                double dx = std::clamp(a6 < a_th ? (a5 - a_th) / (a5 - a6) : a4 < a_th ? (a5 - a_th) / (a4 - a5) : 0.0, -1.0, 1.0);
+                double dy = std::clamp(a2 < a_th ? (a5 - a_th) / (a5 - a2) : a8 < a_th ? (a5 - a_th) / (a8 - a5) : 0.0, -1.0, 1.0);
                 p[i][j].x += dx / (1 + std::abs(dy / dx)); 
                 p[i][j].y += dy / (1 + std::abs(dx / dy));
             }
@@ -408,10 +408,10 @@ int bevel_and_emboss(lua_State *L) {
             Pixel_Info* info9 = &pix_info[j * w + i + 1];
             Pixel_Info* info1 = &pix_info[j * w + i + w];
             Pixel_Info* info3 = &pix_info[j * w + i + 1 + w];
-            double p8 = info7->x == info9->x ? 0.5 : (std::min(1.0, std::max(0.0, (info9->dis - info7->dis + info9->x) / (info9->x - info7->x))));
-            double p4 = info7->y == info1->y ? 0.5 : (std::min(1.0, std::max(0.0, (info1->dis - info7->dis + info1->y) / (info1->y - info7->y))));
-            double p6 = info9->y == info3->y ? 0.5 : (std::min(1.0, std::max(0.0, (info3->dis - info9->dis + info3->y) / (info3->y - info9->y))));
-            double p2 = info1->x == info3->x ? 0.5 : (std::min(1.0, std::max(0.0, (info3->dis - info1->dis + info3->x) / (info3->x - info1->x))));
+            double p8 = info7->x == info9->x ? 0.5 : std::clamp((info9->dis - info7->dis + info9->x) / (info9->x - info7->x), 0.0, 1.0);
+            double p4 = info7->y == info1->y ? 0.5 : std::clamp((info1->dis - info7->dis + info1->y) / (info1->y - info7->y), 0.0, 1.0);
+            double p6 = info9->y == info3->y ? 0.5 : std::clamp((info3->dis - info9->dis + info3->y) / (info3->y - info9->y), 0.0, 1.0);
+            double p2 = info1->x == info3->x ? 0.5 : std::clamp((info3->dis - info1->dis + info3->x) / (info3->x - info1->x), 0.0, 1.0);
             //4頂点の平均値なら低コスト
             double x = (p8 + p2 + 1) / 4, y = (p4 + p6 + 1) / 4;
             info7->gray = (info7->gray * (p8 * y + p4 * x) + info9->gray * ((1 - p8) * y + p6 * (1 - x)) + info1->gray * ((1 - p4) * x + p2 * (1 - y)) + info3->gray * ((1 - p6) * (1 - x) + (1 - p2) * (1 - y))) / 2;
@@ -531,7 +531,7 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].r = static_cast<uint8_t>(bevel_buffer[i].r * (bevel_buffer[i].a / 255.0) + pix[i].r * (1.0 - bevel_buffer[i].a / 255.0));
                 pix[i].g = static_cast<uint8_t>(bevel_buffer[i].g * (bevel_buffer[i].a / 255.0) + pix[i].g * (1.0 - bevel_buffer[i].a / 255.0));
                 pix[i].b = static_cast<uint8_t>(bevel_buffer[i].b * (bevel_buffer[i].a / 255.0) + pix[i].b * (1.0 - bevel_buffer[i].a / 255.0));
-                pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::max(std::min(1.0, bev_w - pix_info[i].dis), 0.0) * 255));
+                pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255));
             }
             
             lua_getfield(L, -1, "putpixeldata");
@@ -702,7 +702,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].r = col1_r;
                     pix[i].g = col1_g;
                     pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::max(0.0, std::min(1.0, bev_w - pix_info[i].dis))));
+                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0)));
                 } else {
                     pix[i].r = 0;
                     pix[i].g = 0;
@@ -744,7 +744,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].r = col2_r;
                     pix[i].g = col2_g;
                     pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::max(0.0, std::min(1.0, bev_w - pix_info[i].dis))));
+                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0)));
                 } else {
                     pix[i].r = 0;
                     pix[i].g = 0;
@@ -787,7 +787,7 @@ int bevel_and_emboss(lua_State *L) {
             pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
             lua_pop(L, 3);
             for(int i = 0; i < w * h; i++) {
-                pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::max(0.0, std::min(1.0, bev_w - pix_info[i].dis)) * 255.0));
+                pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255.0));
             }
             
             lua_getfield(L, -1, "putpixeldata");
@@ -831,7 +831,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].r = col1_r;
                     pix[i].g = col1_g;
                     pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2.0 / 255.0 - 1.0) * pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::max(0.0, std::min(1.0, bev_w - pix_info[i].dis))));
+                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2.0 / 255.0 - 1.0) * pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0)));
                 } else {
                     pix[i].r = 0;
                     pix[i].g = 0;
@@ -873,7 +873,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].r = col2_r;
                     pix[i].g = col2_g;
                     pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -(bevel_buffer[i].a * 2.0 / 255.0 - 1.0) * pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::max(0.0, std::min(1.0, bev_w - pix_info[i].dis))));
+                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -(bevel_buffer[i].a * 2.0 / 255.0 - 1.0) * pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0)));
                 } else {
                     pix[i].r = 0;
                     pix[i].g = 0;
@@ -916,7 +916,7 @@ int bevel_and_emboss(lua_State *L) {
             pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
             lua_pop(L, 3);
             for(int i = 0; i < w * h; i++) {
-                pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::max(0.0, std::min(1.0, bev_w - pix_info[i].dis)) * 255.0));
+                pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255.0));
             }
             
             lua_getfield(L, -1, "putpixeldata");
@@ -1252,7 +1252,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].r = col1_r;
                     pix[i].g = col1_g;
                     pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray) * std::max(0.0, std::min(1.0, bev_w - pix_info[i].dis)));
+                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
                 } else {
                     pix[i].r = 0;
                     pix[i].g = 0;
@@ -1316,7 +1316,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].r = col2_r;
                     pix[i].g = col2_g;
                     pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray) * std::max(0.0, std::min(1.0, bev_w - pix_info[i].dis)));
+                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
                 } else {
                     pix[i].r = 0;
                     pix[i].g = 0;
@@ -1394,7 +1394,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].r = col1_r;
                     pix[i].g = col1_g;
                     pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * pix_info[i].gray) * std::max(0.0, std::min(1.0, bev_w - pix_info[i].dis)));
+                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
                 } else {
                     pix[i].r = 0;
                     pix[i].g = 0;
@@ -1458,7 +1458,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].r = col2_r;
                     pix[i].g = col2_g;
                     pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * (-pix_info[i].gray)) * std::max(0.0, std::min(1.0, bev_w - pix_info[i].dis)));
+                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * (-pix_info[i].gray)) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
                 } else {
                     pix[i].r = 0;
                     pix[i].g = 0;
@@ -1570,7 +1570,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].r = col1_r;
                     pix[i].g = col1_g;
                     pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray) * std::max(0.0, std::min(1.0, bev_w - pix_info[i].dis)));
+                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
                 } else {
                     pix[i].r = 0;
                     pix[i].g = 0;
@@ -1602,7 +1602,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].r = col1_r;
                     pix[i].g = col1_g;
                     pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * pix_info[i].gray) * std::max(0.0, std::min(1.0, bev_w - pix_info[i].dis)));
+                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
                 } else {
                     pix[i].r = 0;
                     pix[i].g = 0;
@@ -1698,7 +1698,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].r = col2_r;
                     pix[i].g = col2_g;
                     pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray) * std::max(0.0, std::min(1.0, bev_w - pix_info[i].dis)));
+                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
                 } else {
                     pix[i].r = 0;
                     pix[i].g = 0;
@@ -1730,7 +1730,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].r = col2_r;
                     pix[i].g = col2_g;
                     pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * (-pix_info[i].gray)) * std::max(0.0, std::min(1.0, bev_w - pix_info[i].dis)));
+                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * (-pix_info[i].gray)) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
                 } else {
                     pix[i].r = 0;
                     pix[i].g = 0;
