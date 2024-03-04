@@ -342,7 +342,8 @@ int bevel_and_emboss(lua_State *L) {
                 p[i][j].x = x / 2 + bufx / 4 + p[i][(j + 1) % p[i].size()].x / 4;
                 p[i][j].y = y / 2 + bufy / 4 + p[i][(j + 1) % p[i].size()].y / 4;
             }
-            bufx, bufy = x, y;
+            bufx = x;
+            bufy = y;
         }
     }
 
