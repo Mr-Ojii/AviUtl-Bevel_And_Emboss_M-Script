@@ -147,6 +147,8 @@ int bevel_and_emboss(lua_State *L) {
     // –‘OŒvZ‚Å‚«‚é‚à‚Ì‚ÍŒvZ‚µ‚Ä‚¨‚­
     high = std::cos(rad(high));
     rot = rad(rot);
+    double sin_rot = std::sin(rot);
+    double cos_rot = std::cos(rot);
     uint8_t bgcol_r = (bgcol >> 16) & 0xff;
     uint8_t bgcol_g = (bgcol >> 8) & 0xff;
     uint8_t bgcol_b = (bgcol) & 0xff;
@@ -401,7 +403,12 @@ int bevel_and_emboss(lua_State *L) {
             info->dis = std::sqrt(info->dis);
             info->x = (info->x - (i - 0.5)) / info->dis;
             info->y = (info->y - (j - 0.5)) / info->dis;
-            info->gray = std::cos(std::atan2(info->y, info->x) + rot) * high * (info->line < 0 ? -1 : 1);
+
+            // cos(atan2(y, x) + r)
+            // = cos(atan2(y, x)) * cos(r) - sin(atan2(y, x)) * sin(r)
+            // (x, y)‚Íã‚Å³‹K‰»‚µ‚½‚Ì‚Å
+            // = x * cos(r) - y * sin(r)
+            info->gray = (info->x * cos_rot - info->y * sin_rot) * high * (info->line < 0 ? -1 : 1);
         }
     }
 
