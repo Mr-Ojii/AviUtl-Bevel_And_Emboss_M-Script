@@ -144,6 +144,8 @@ int bevel_and_emboss(lua_State *L) {
     double preblur = lua_tonumber(L, 14);
     double isline = lua_tonumber(L, 15);
 
+    // –‘OŒvZ‚Å‚«‚é‚à‚Ì‚ÍŒvZ‚µ‚Ä‚¨‚­
+    high = std::cos(rad(high));
     uint8_t bgcol_r = (bgcol >> 16) & 0xff;
     uint8_t bgcol_g = (bgcol >> 8) & 0xff;
     uint8_t bgcol_b = (bgcol) & 0xff;
@@ -398,7 +400,7 @@ int bevel_and_emboss(lua_State *L) {
             info->dis = std::sqrt(info->dis);
             info->x = (info->x - (i - 0.5)) / info->dis;
             info->y = (info->y - (j - 0.5)) / info->dis;
-            info->gray = std::cos(std::atan2(info->y, info->x) + rad(rot)) * std::cos(rad(high)) * (info->line < 0 ? -1 : 1);
+            info->gray = std::cos(std::atan2(info->y, info->x) + rad(rot)) * high * (info->line < 0 ? -1 : 1);
         }
     }
 
