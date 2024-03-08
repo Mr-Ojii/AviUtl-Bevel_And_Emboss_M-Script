@@ -132,7 +132,7 @@ int bevel_and_emboss(lua_State *L) {
     double bev_w = lua_tonumber(L, 2);
     double rot = lua_tonumber(L, 3);
     double high = lua_tonumber(L, 4);
-    int style = lua_tointeger(L, 5);
+    unsigned int style = lua_tointeger(L, 5);
     double blur = lua_tonumber(L, 6);
     int col1 = lua_tointeger(L, 7);
     int ble1 = lua_tointeger(L, 8);
@@ -162,7 +162,7 @@ int bevel_and_emboss(lua_State *L) {
     if(style % 4 == 2 || style % 4 == 3)
         bev_w /= 2.0;
 
-    if(bev_w <= 0 || style < 0 || style > 15)
+    if(bev_w <= 0 || style > 15)
         return 0;
 
     //4近傍を取得する時にOutOfIndexにしないためのマージン&ぼかし時に輪郭が端で途切れるのを回避
