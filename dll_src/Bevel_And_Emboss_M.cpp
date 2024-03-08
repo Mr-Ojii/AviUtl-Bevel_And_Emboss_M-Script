@@ -335,13 +335,13 @@ int bevel_and_emboss(lua_State *L) {
     for(int i = 0; i < p.size(); i++) {
         double bufx = p[i][0].x, bufy = p[i][0].y;
         for(int j = 1; j < p[i].size(); j++) {
-            double x = p[i][j].x, y = p[i][j].y;
-            if(squared(x * 2 - bufx - p[i][(j + 1) % p[i].size()].x) + squared(y * 2 - bufy - p[i][(j + 1) % p[i].size()].y) < hoge) {
-                p[i][j].x = x / 2 + bufx / 4 + p[i][(j + 1) % p[i].size()].x / 4;
-                p[i][j].y = y / 2 + bufy / 4 + p[i][(j + 1) % p[i].size()].y / 4;
+            double x0 = p[i][j].x, y0 = p[i][j].y, x1 = p[i][(j + 1) % p[i].size()].x, y1 = p[i][(j + 1) % p[i].size()].y;
+            if(squared(x0 * 2 - bufx - x1) + squared(y0 * 2 - bufy - y1) < hoge) {
+                p[i][j].x = x0 / 2 + bufx / 4 + x1 / 4;
+                p[i][j].y = y0 / 2 + bufy / 4 + y1 / 4;
             }
-            bufx = x;
-            bufy = y;
+            bufx = x0;
+            bufy = y0;
         }
     }
 
