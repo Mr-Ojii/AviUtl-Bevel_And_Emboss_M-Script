@@ -237,14 +237,15 @@ int bevel_and_emboss(lua_State *L) {
 
     //rikky_module.bordering
     std::vector< std::vector<Point> > p;
+    int border_i = 0;
     while(1)
     {
         std::vector<Point> pb;
         Point tmp_point = {-1, -1};
-        for(int i = 0; i < w * h; i++) {
-            if(border_ans[i]) {
-                tmp_point.x = i % w;
-                tmp_point.y = i / w;
+        for(; border_i < w * h; border_i++) {
+            if(border_ans[border_i]) {
+                tmp_point.x = border_i % w;
+                tmp_point.y = border_i / w;
                 break;
             }
         }
