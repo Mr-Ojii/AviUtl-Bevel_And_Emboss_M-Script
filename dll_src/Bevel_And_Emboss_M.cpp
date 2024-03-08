@@ -207,7 +207,8 @@ int bevel_and_emboss(lua_State *L) {
     
     lua_getfield(L, -1, "getpixeldata");
     lua_call(L, 0, 3);
-    std::unique_ptr<Pixel_BGRA[]> bevel_buffer = std::make_unique<Pixel_BGRA[]>(w * h);
+
+    std::unique_ptr<Pixel_BGRA[]> bevel_buffer = std::make_unique_for_overwrite<Pixel_BGRA[]>(w * h);
     memcpy(bevel_buffer.get(), lua_touserdata(L, -3), sizeof(Pixel_BGRA) * w * h);
     lua_pop(L, 3);
 
@@ -221,14 +222,14 @@ int bevel_and_emboss(lua_State *L) {
     lua_call(L, 5, 0);
 
     //ピクセルのアルファ値,輪郭までの最短距離,最短輪郭の座標X,Y,輪郭の内外判定値,グレスケ(-1～1)
-    std::unique_ptr<Pixel_Info[]> pix_info = std::make_unique<Pixel_Info[]>(w * h);
+    std::unique_ptr<Pixel_Info[]> pix_info = std::make_unique_for_overwrite<Pixel_Info[]>(w * h);
 
     lua_getfield(L, -1, "getpixeldata");
     lua_call(L, 0, 3);
 
     Pixel_BGRA* pixel = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
     lua_pop(L, 3);
-    std::unique_ptr<bool[]> border_ans = std::make_unique<bool[]>(w * h);
+    std::unique_ptr<bool[]> border_ans = std::make_unique_for_overwrite<bool[]>(w * h);
     
     for(int j = 0; j < h; j++) {
         for(int i = 0; i < w; i++) {
