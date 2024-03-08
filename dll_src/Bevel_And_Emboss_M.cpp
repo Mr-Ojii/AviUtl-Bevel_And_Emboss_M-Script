@@ -167,31 +167,22 @@ int bevel_and_emboss(lua_State *L) {
 
     //4近傍を取得する時にOutOfIndexにしないためのマージン&ぼかし時に輪郭が端で途切れるのを回避
     lua_getglobal(L, "obj");
+
+    double initblur = preblur + 1;
+    if (style % 4 != 1)
+        initblur += std::ceil(bev_w);
+
     lua_getfield(L, -1, "effect");
     lua_pushstring(L, "領域拡張");
     lua_pushstring(L, "上");
-    lua_pushnumber(L, preblur + 1);
+    lua_pushnumber(L, initblur);
     lua_pushstring(L, "下");
-    lua_pushnumber(L, preblur + 1);
+    lua_pushnumber(L, initblur);
     lua_pushstring(L, "左");
-    lua_pushnumber(L, preblur + 1);
+    lua_pushnumber(L, initblur);
     lua_pushstring(L, "右");
-    lua_pushnumber(L, preblur + 1);
+    lua_pushnumber(L, initblur);
     lua_call(L, 9, 0);
-
-    if(style % 4 != 1) {
-        lua_getfield(L, -1, "effect");
-        lua_pushstring(L, "領域拡張");
-        lua_pushstring(L, "上");
-        lua_pushnumber(L, std::ceil(bev_w));
-        lua_pushstring(L, "下");
-        lua_pushnumber(L, std::ceil(bev_w));
-        lua_pushstring(L, "左");
-        lua_pushnumber(L, std::ceil(bev_w));
-        lua_pushstring(L, "右");
-        lua_pushnumber(L, std::ceil(bev_w));
-        lua_call(L, 9, 0);
-    }
 
     //"getpixeldata"でw,hとれるじゃん！
     //と思ったが、exedit.auf側で例外が発生する例があるので、getpixelを呼ぶ
