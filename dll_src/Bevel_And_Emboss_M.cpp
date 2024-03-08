@@ -244,7 +244,7 @@ int bevel_and_emboss(lua_State *L) {
     }
 
     //rikky_module.bordering
-    std::vector<std::vector<Point>> p;
+    std::vector< std::vector<Point> > p;
     while(1)
     {
         std::vector<Point> pb;
@@ -309,8 +309,8 @@ int bevel_and_emboss(lua_State *L) {
                 break;
             
             tmp_point = next_point;
-        }        
-        p.push_back(pb);
+        }
+        p.push_back(std::move(pb));
     }
 
     lua_getfield(L, -1, "putpixeldata");
