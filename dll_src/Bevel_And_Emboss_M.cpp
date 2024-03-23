@@ -155,6 +155,16 @@ inline void utl_copybuffer(lua_State *L, const char* dst, const char* src) {
     lua_call(L, 2, 0);
 }
 
+inline void utl_draw(lua_State *L, double alp) {
+    lua_getfield(L, -1, "draw");
+    lua_pushnumber(L, 0);
+    lua_pushnumber(L, 0);
+    lua_pushnumber(L, 0);
+    lua_pushnumber(L, 1);
+    lua_pushnumber(L, alp / 100.0);
+    lua_call(L, 5, 0);
+}
+
 //点[x,y]から最も近い線分[x0,y0]:[x0+dx,y0+dy]上の点の、距離の2乗と座標を返す関数
 inline std::tuple<double, double, double> distance_line(double x, double y, double x0, double y0, double dx, double dy)
 {
@@ -479,13 +489,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blend(L, ble1);
             
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp1 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp1);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
@@ -500,13 +504,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blend(L, ble2);
             
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp2 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp2);
 
             utl_copybuffer(L, "obj", "tmp");
 
@@ -556,13 +554,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blend(L, ble1);
 
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp1 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp1);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
@@ -584,13 +576,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blend(L, ble2);
 
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp2 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp2);
 
             utl_copybuffer(L, "obj", "tmp");
 
@@ -641,13 +627,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blend(L, ble1);
 
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp1 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp1);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
@@ -669,13 +649,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blend(L, ble2);
 
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp2 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp2);
 
             utl_copybuffer(L, "obj", "tmp");
 
@@ -726,13 +700,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blend(L, ble1);
 
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp1 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp1);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
@@ -754,13 +722,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blend(L, ble2);
 
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp2 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp2);
 
             utl_copybuffer(L, "obj", "tmp");
 
@@ -826,13 +788,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
             
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp1 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp1);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
@@ -873,13 +829,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
             
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp2 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp2);
             
             break;
         }
@@ -935,13 +885,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
             
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp1 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp1);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
@@ -982,13 +926,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
             
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp2 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp2);
             break;
         }
         case 6: //エンボス 直接描画
@@ -1043,13 +981,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
             
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp1 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp1);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
@@ -1090,13 +1022,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
             
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp2 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp2);
             break;
         }
         case 7: //ピローエンボス 直接描画
@@ -1151,13 +1077,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
             
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp1 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp1);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
@@ -1198,13 +1118,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
             
-            lua_getfield(L, -1, "draw");
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 0);
-            lua_pushnumber(L, 1);
-            lua_pushnumber(L, alp2 / 100.0);
-            lua_call(L, 5, 0);
+            utl_draw(L, alp2);
             break;
         }
         case 8: //ベベル(外側) ハイライトのみ
