@@ -117,6 +117,16 @@ inline double squared(double num) {
     return num * num;
 }
 
+inline void utl_blur(lua_State *L, double n_blur) {
+    lua_getfield(L, -1, "effect");
+    lua_pushstring(L, "ぼかし");
+    lua_pushstring(L, "範囲");
+    lua_pushnumber(L, n_blur);
+    lua_pushstring(L, "サイズ固定");
+    lua_pushnumber(L, 1);
+    lua_call(L, 5, 0);
+}
+
 //点[x,y]から最も近い線分[x0,y0]:[x0+dx,y0+dy]上の点の、距離の2乗と座標を返す関数
 inline std::tuple<double, double, double> distance_line(double x, double y, double x0, double y0, double dx, double dy)
 {
@@ -204,13 +214,7 @@ int bevel_and_emboss(lua_State *L) {
     lua_pop(L, 3);
 
     //辺は滑らかになるが頂点が丸くなるので一長一短
-    lua_getfield(L, -1, "effect");
-    lua_pushstring(L, "ぼかし");
-    lua_pushstring(L, "範囲");
-    lua_pushnumber(L, preblur);
-    lua_pushstring(L, "サイズ固定");
-    lua_pushnumber(L, 1);
-    lua_call(L, 5, 0);
+    utl_blur(L, preblur);
 
     //ピクセルのアルファ値,輪郭までの最短距離,最短輪郭の座標X,Y,輪郭の内外判定値,グレスケ(-1～1)
     std::unique_ptr<Pixel_Info[]> pix_info = std::make_unique_for_overwrite<Pixel_Info[]>(w * h);
@@ -465,13 +469,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -500,13 +498,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -588,13 +580,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -630,13 +616,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -718,13 +698,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -760,13 +734,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -847,13 +815,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -889,13 +851,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -983,13 +939,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -1047,13 +997,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -1126,13 +1070,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -1190,13 +1128,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -1268,13 +1200,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -1332,13 +1258,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -1410,13 +1330,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -1474,13 +1388,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "blend");
@@ -1522,13 +1430,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
             break;
         }
         case 9: //ベベル(内側) ハイライトのみ
@@ -1554,13 +1456,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
             break;
         }
         case 10: //エンボス ハイライトのみ
@@ -1586,13 +1482,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
             break;
         }
         case 11: //ピローエンボス ハイライトのみ
@@ -1618,13 +1508,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
             break;
         }
         case 12: //ベベル(外側) シャドウのみ
@@ -1650,13 +1534,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
             break;
         }
         case 13: //ベベル(内側) シャドウのみ
@@ -1682,13 +1560,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
             break;
         }
         case 14: //エンボス シャドウのみ
@@ -1714,13 +1586,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
             break;
         }
         case 15: //ピローエンボス シャドウのみ
@@ -1746,13 +1612,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushlightuserdata(L, pix);
             lua_call(L, 1, 0);
 
-            lua_getfield(L, -1, "effect");
-            lua_pushstring(L, "ぼかし");
-            lua_pushstring(L, "範囲");
-            lua_pushnumber(L, blur);
-            lua_pushstring(L, "サイズ固定");
-            lua_pushnumber(L, 1);
-            lua_call(L, 5, 0);
+            utl_blur(L, blur);
             break;
         }
     }
