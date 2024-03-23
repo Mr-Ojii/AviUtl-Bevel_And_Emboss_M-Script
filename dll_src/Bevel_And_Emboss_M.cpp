@@ -172,6 +172,15 @@ inline void utl_drawtarget(lua_State *L, const char* dst) {
     lua_call(L, 2, 0);
 }
 
+inline void utl_temptarget(lua_State *L, int w, int h) {
+    lua_getfield(L, -1, "setoption");
+    lua_pushstring(L, "drawtarget");
+    lua_pushstring(L, "tempbuffer");
+    lua_pushnumber(L, w);
+    lua_pushnumber(L, h);
+    lua_call(L, 4, 0);
+}
+
 //点[x,y]から最も近い線分[x0,y0]:[x0+dx,y0+dy]上の点の、距離の2乗と座標を返す関数
 inline std::tuple<double, double, double> distance_line(double x, double y, double x0, double y0, double dx, double dy)
 {
@@ -741,12 +750,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_call(L, 0, 0);
 
             //obj.effect()で解像度が変わる可能性があるので再読み込み
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "tempbuffer");
-            lua_pushnumber(L, w);
-            lua_pushnumber(L, h);
-            lua_call(L, 4, 0);
+            utl_temptarget(L, w, h);
 
             utl_copybuffer(L, "obj", "tmp");
 
@@ -779,12 +783,7 @@ int bevel_and_emboss(lua_State *L) {
             
             utl_draw(L, alp1);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "tempbuffer");
-            lua_pushnumber(L, w);
-            lua_pushnumber(L, h);
-            lua_call(L, 4, 0);
+            utl_temptarget(L, w, h);
 
             utl_copybuffer(L, "obj", "tmp");
 
@@ -829,12 +828,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_getfield(L, -1, "draw");
             lua_call(L, 0, 0);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "tempbuffer");
-            lua_pushnumber(L, w);
-            lua_pushnumber(L, h);
-            lua_call(L, 4, 0);
+            utl_temptarget(L, w, h);
 
             utl_copybuffer(L, "obj", "tmp");
 
@@ -867,12 +861,7 @@ int bevel_and_emboss(lua_State *L) {
             
             utl_draw(L, alp1);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "tempbuffer");
-            lua_pushnumber(L, w);
-            lua_pushnumber(L, h);
-            lua_call(L, 4, 0);
+            utl_temptarget(L, w, h);
 
             utl_copybuffer(L, "obj", "tmp");
 
@@ -916,12 +905,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_getfield(L, -1, "draw");
             lua_call(L, 0, 0);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "tempbuffer");
-            lua_pushnumber(L, w);
-            lua_pushnumber(L, h);
-            lua_call(L, 4, 0);
+            utl_temptarget(L, w, h);
 
             utl_copybuffer(L, "obj", "tmp");
 
@@ -954,12 +938,7 @@ int bevel_and_emboss(lua_State *L) {
             
             utl_draw(L, alp1);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "tempbuffer");
-            lua_pushnumber(L, w);
-            lua_pushnumber(L, h);
-            lua_call(L, 4, 0);
+            utl_temptarget(L, w, h);
 
             utl_copybuffer(L, "obj", "tmp");
 
@@ -1003,12 +982,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_getfield(L, -1, "draw");
             lua_call(L, 0, 0);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "tempbuffer");
-            lua_pushnumber(L, w);
-            lua_pushnumber(L, h);
-            lua_call(L, 4, 0);
+            utl_temptarget(L, w, h);
 
             utl_copybuffer(L, "obj", "tmp");
 
@@ -1041,12 +1015,7 @@ int bevel_and_emboss(lua_State *L) {
             
             utl_draw(L, alp1);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "tempbuffer");
-            lua_pushnumber(L, w);
-            lua_pushnumber(L, h);
-            lua_call(L, 4, 0);
+            utl_temptarget(L, w, h);
 
             utl_copybuffer(L, "obj", "tmp");
 
