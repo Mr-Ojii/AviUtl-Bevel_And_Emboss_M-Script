@@ -127,6 +127,12 @@ inline void utl_blur(lua_State *L, double n_blur) {
     lua_call(L, 5, 0);
 }
 
+inline void utl_putpixeldata(lua_State *L, void* pix) {
+    lua_getfield(L, -1, "putpixeldata");
+    lua_pushlightuserdata(L, pix);
+    lua_call(L, 1, 0);
+}
+
 //点[x,y]から最も近い線分[x0,y0]:[x0+dx,y0+dy]上の点の、距離の2乗と座標を返す関数
 inline std::tuple<double, double, double> distance_line(double x, double y, double x0, double y0, double dx, double dy)
 {
@@ -310,9 +316,7 @@ int bevel_and_emboss(lua_State *L) {
         p.push_back(std::move(pb));
     }
 
-    lua_getfield(L, -1, "putpixeldata");
-    lua_pushlightuserdata(L, bevel_buffer.get());
-    lua_call(L, 1, 0);
+    utl_putpixeldata(L, bevel_buffer.get());
 
     //近傍の透明度を参照して、輪郭を小数点以下で補正
     for(int i = 0; i < p.size(); i++) {
@@ -441,9 +445,7 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].b = bgcol_b;
                 pix[i].a = 0xff;
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
             
             lua_getfield(L, -1, "copybuffer");
             lua_pushstring(L, "tmp");
@@ -465,9 +467,7 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].b = col1_b;
                 pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray));
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -494,9 +494,7 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].b = col2_b;
                 pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray));
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -529,10 +527,7 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].b = static_cast<uint8_t>(bevel_buffer[i].b * (bevel_buffer[i].a / 255.0) + pix[i].b * (1.0 - bevel_buffer[i].a / 255.0));
                 pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255));
             }
-            
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             break;
         }
@@ -545,9 +540,7 @@ int bevel_and_emboss(lua_State *L) {
             for(int i = 0; i < w * h; i++) {
                 pix[i].a = 0xff;
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
             
             lua_getfield(L, -1, "copybuffer");
             lua_pushstring(L, "tmp");
@@ -576,9 +569,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -612,9 +603,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -645,9 +634,7 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].a = bevel_buffer[i].a;
             }
             
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             break;
         }
@@ -663,9 +650,7 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].b = static_cast<uint8_t>(pix[i].b * (pix[i].a / 255.0) + bgcol_b * (1 - pix[i].a / 255.0));
                 pix[i].a = 0xff;
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
             
             lua_getfield(L, -1, "copybuffer");
             lua_pushstring(L, "tmp");
@@ -694,9 +679,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -730,9 +713,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -762,9 +743,7 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255.0));
             }
             
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             break;
         }
@@ -780,9 +759,7 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].b = static_cast<uint8_t>(pix[i].b * (pix[i].a / 255.0) + bgcol_b * (1 - pix[i].a / 255.0));
                 pix[i].a = 0xff;
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
             
             lua_getfield(L, -1, "copybuffer");
             lua_pushstring(L, "tmp");
@@ -811,9 +788,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -847,9 +822,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -879,9 +852,7 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255.0));
             }
             
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             break;
         }
@@ -935,9 +906,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -993,9 +962,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -1066,9 +1033,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -1124,9 +1089,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -1196,9 +1159,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -1254,9 +1215,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -1326,9 +1285,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -1384,9 +1341,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
 
@@ -1426,9 +1381,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
             break;
@@ -1452,9 +1405,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
             break;
@@ -1478,9 +1429,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
             break;
@@ -1504,9 +1453,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
             break;
@@ -1530,9 +1477,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
             break;
@@ -1556,9 +1501,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
             break;
@@ -1582,9 +1525,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
             break;
@@ -1608,9 +1549,7 @@ int bevel_and_emboss(lua_State *L) {
                     pix[i].a = 0;
                 }
             }
-            lua_getfield(L, -1, "putpixeldata");
-            lua_pushlightuserdata(L, pix);
-            lua_call(L, 1, 0);
+            utl_putpixeldata(L, pix);
 
             utl_blur(L, blur);
             break;
