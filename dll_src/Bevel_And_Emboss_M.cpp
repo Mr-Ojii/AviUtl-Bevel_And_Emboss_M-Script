@@ -165,6 +165,13 @@ inline void utl_draw(lua_State *L, double alp) {
     lua_call(L, 5, 0);
 }
 
+inline void utl_drawtarget(lua_State *L, const char* dst) {
+    lua_getfield(L, -1, "setoption");
+    lua_pushstring(L, "drawtarget");
+    lua_pushstring(L, dst);
+    lua_call(L, 2, 0);
+}
+
 //点[x,y]から最も近い線分[x0,y0]:[x0+dx,y0+dy]上の点の、距離の2乗と座標を返す関数
 inline std::tuple<double, double, double> distance_line(double x, double y, double x0, double y0, double dx, double dy)
 {
@@ -471,10 +478,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_copybuffer(L, "tmp", "obj");
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "tempbuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "tempbuffer");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
@@ -529,10 +533,7 @@ int bevel_and_emboss(lua_State *L) {
             
             utl_copybuffer(L, "tmp", "obj");
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "tempbuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "tempbuffer");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
@@ -602,10 +603,7 @@ int bevel_and_emboss(lua_State *L) {
             
             utl_copybuffer(L, "tmp", "obj");
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "tempbuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "tempbuffer");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
@@ -675,10 +673,7 @@ int bevel_and_emboss(lua_State *L) {
             
             utl_copybuffer(L, "tmp", "obj");
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "tempbuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "tempbuffer");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
@@ -737,10 +732,7 @@ int bevel_and_emboss(lua_State *L) {
         }
         case 4: //ベベル(外側)直接描画
         {
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "framebuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "framebuffer");
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
@@ -758,10 +750,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_copybuffer(L, "obj", "tmp");
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "framebuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "framebuffer");
             
             setObjField(L, obj);
 
@@ -799,10 +788,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_copybuffer(L, "obj", "tmp");
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "framebuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "framebuffer");
             
             setObjField(L, obj);
 
@@ -835,10 +821,7 @@ int bevel_and_emboss(lua_State *L) {
         }
         case 5: //ベベル(内側)直接描画
         {
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "framebuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "framebuffer");
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
@@ -855,10 +838,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_copybuffer(L, "obj", "tmp");
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "framebuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "framebuffer");
             
             setObjField(L, obj);
 
@@ -896,10 +876,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_copybuffer(L, "obj", "tmp");
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "framebuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "framebuffer");
             
             setObjField(L, obj);
 
@@ -931,10 +908,7 @@ int bevel_and_emboss(lua_State *L) {
         }
         case 6: //エンボス 直接描画
         {
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "framebuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "framebuffer");
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
@@ -951,10 +925,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_copybuffer(L, "obj", "tmp");
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "framebuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "framebuffer");
             
             setObjField(L, obj);
 
@@ -992,10 +963,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_copybuffer(L, "obj", "tmp");
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "framebuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "framebuffer");
             
             setObjField(L, obj);
 
@@ -1027,10 +995,7 @@ int bevel_and_emboss(lua_State *L) {
         }
         case 7: //ピローエンボス 直接描画
         {
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "framebuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "framebuffer");
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
@@ -1047,10 +1012,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_copybuffer(L, "obj", "tmp");
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "framebuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "framebuffer");
             
             setObjField(L, obj);
 
@@ -1088,10 +1050,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_copybuffer(L, "obj", "tmp");
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "drawtarget");
-            lua_pushstring(L, "framebuffer");
-            lua_call(L, 2, 0);
+            utl_drawtarget(L, "framebuffer");
             
             setObjField(L, obj);
 
@@ -1293,10 +1252,7 @@ int bevel_and_emboss(lua_State *L) {
 
     utl_blend(L, 0);
 
-    lua_getfield(L, -1, "setoption");
-    lua_pushstring(L, "drawtarget");
-    lua_pushstring(L, "framebuffer");
-    lua_call(L, 2, 0);
+    utl_drawtarget(L, "framebuffer");
 
     return 0;
 }
