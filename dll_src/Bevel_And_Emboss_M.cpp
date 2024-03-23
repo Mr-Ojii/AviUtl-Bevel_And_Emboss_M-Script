@@ -484,9 +484,7 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].a = 0xff;
             }
             utl_putpixeldata(L, pix);
-
             utl_copybuffer(L, "tmp", "obj");
-
             utl_drawtarget(L, "tempbuffer");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -497,11 +495,8 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray));
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble1);
-            
             utl_draw(L, alp1);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -512,13 +507,9 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray));
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble2);
-            
             utl_draw(L, alp2);
-
             utl_copybuffer(L, "obj", "tmp");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -529,7 +520,6 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255));
             }
             utl_putpixeldata(L, pix);
-
             break;
         }
         case 1: //ベベル(内側)
@@ -539,9 +529,7 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].a = 0xff;
             }
             utl_putpixeldata(L, pix);
-            
             utl_copybuffer(L, "tmp", "obj");
-
             utl_drawtarget(L, "tempbuffer");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -559,11 +547,8 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble1);
-
             utl_draw(L, alp1);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -581,13 +566,9 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble2);
-
             utl_draw(L, alp2);
-
             utl_copybuffer(L, "obj", "tmp");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -596,7 +577,6 @@ int bevel_and_emboss(lua_State *L) {
             }
             
             utl_putpixeldata(L, pix);
-
             break;
         }
         case 2: //エンボス
@@ -609,9 +589,7 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].a = 0xff;
             }
             utl_putpixeldata(L, pix);
-            
             utl_copybuffer(L, "tmp", "obj");
-
             utl_drawtarget(L, "tempbuffer");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -629,11 +607,8 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble1);
-
             utl_draw(L, alp1);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -651,13 +626,9 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble2);
-
             utl_draw(L, alp2);
-
             utl_copybuffer(L, "obj", "tmp");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -666,7 +637,6 @@ int bevel_and_emboss(lua_State *L) {
             }
             
             utl_putpixeldata(L, pix);
-
             break;
         }
         case 3: //ピローエンボス
@@ -679,9 +649,7 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].a = 0xff;
             }
             utl_putpixeldata(L, pix);
-            
             utl_copybuffer(L, "tmp", "obj");
-
             utl_drawtarget(L, "tempbuffer");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -699,11 +667,8 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble1);
-
             utl_draw(L, alp1);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -721,20 +686,16 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble2);
-
             utl_draw(L, alp2);
-
             utl_copybuffer(L, "obj", "tmp");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255.0));
             }
-            
+
             utl_putpixeldata(L, pix);
 
             break;
@@ -751,11 +712,9 @@ int bevel_and_emboss(lua_State *L) {
 
             //obj.effect()で解像度が変わる可能性があるので再読み込み
             utl_temptarget(L, w, h);
-
             utl_copybuffer(L, "obj", "tmp");
-
             utl_drawtarget(L, "framebuffer");
-            
+
             setObjField(L, obj);
 
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -773,22 +732,17 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble1);
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
-            
+
             utl_draw(L, alp1);
-
             utl_temptarget(L, w, h);
-
             utl_copybuffer(L, "obj", "tmp");
-
             utl_drawtarget(L, "framebuffer");
-            
+
             setObjField(L, obj);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -806,16 +760,13 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble2);
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
-            
+
             utl_draw(L, alp2);
-            
             break;
         }
         case 5: //ベベル(内側)直接描画
@@ -829,11 +780,9 @@ int bevel_and_emboss(lua_State *L) {
             lua_call(L, 0, 0);
 
             utl_temptarget(L, w, h);
-
             utl_copybuffer(L, "obj", "tmp");
-
             utl_drawtarget(L, "framebuffer");
-            
+
             setObjField(L, obj);
 
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -851,22 +800,17 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble1);
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
-            
+
             utl_draw(L, alp1);
-
             utl_temptarget(L, w, h);
-
             utl_copybuffer(L, "obj", "tmp");
-
             utl_drawtarget(L, "framebuffer");
-            
+
             setObjField(L, obj);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -884,9 +828,7 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble2);
 
             lua_getfield(L, -1, "effect");
@@ -906,11 +848,9 @@ int bevel_and_emboss(lua_State *L) {
             lua_call(L, 0, 0);
 
             utl_temptarget(L, w, h);
-
             utl_copybuffer(L, "obj", "tmp");
-
             utl_drawtarget(L, "framebuffer");
-            
+
             setObjField(L, obj);
 
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -928,22 +868,17 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble1);
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
-            
+
             utl_draw(L, alp1);
-
             utl_temptarget(L, w, h);
-
             utl_copybuffer(L, "obj", "tmp");
-
             utl_drawtarget(L, "framebuffer");
-            
+
             setObjField(L, obj);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -961,14 +896,12 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble2);
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
-            
+
             utl_draw(L, alp2);
             break;
         }
@@ -983,11 +916,9 @@ int bevel_and_emboss(lua_State *L) {
             lua_call(L, 0, 0);
 
             utl_temptarget(L, w, h);
-
             utl_copybuffer(L, "obj", "tmp");
-
             utl_drawtarget(L, "framebuffer");
-            
+
             setObjField(L, obj);
 
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
@@ -1005,20 +936,15 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble1);
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
             
             utl_draw(L, alp1);
-
             utl_temptarget(L, w, h);
-
             utl_copybuffer(L, "obj", "tmp");
-
             utl_drawtarget(L, "framebuffer");
             
             setObjField(L, obj);
@@ -1038,9 +964,7 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
-
             utl_blend(L, ble2);
 
             lua_getfield(L, -1, "effect");
@@ -1066,7 +990,6 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
             break;
         }
@@ -1087,7 +1010,6 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
             break;
         }
@@ -1108,7 +1030,6 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
             break;
         }
@@ -1129,7 +1050,6 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
             break;
         }
@@ -1150,7 +1070,6 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
             break;
         }
@@ -1171,7 +1090,6 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
             break;
         }
@@ -1192,7 +1110,6 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
             break;
         }
@@ -1213,14 +1130,12 @@ int bevel_and_emboss(lua_State *L) {
                 }
             }
             utl_putpixeldata(L, pix);
-
             utl_blur(L, blur);
             break;
         }
     }
 
     utl_blend(L, 0);
-
     utl_drawtarget(L, "framebuffer");
 
     return 0;
