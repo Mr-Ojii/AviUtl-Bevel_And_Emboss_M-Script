@@ -148,6 +148,13 @@ inline void utl_blend(lua_State *L, int ble) {
     lua_call(L, 2, 0);
 }
 
+inline void utl_copybuffer(lua_State *L, const char* dst, const char* src) {
+    lua_getfield(L, -1, "copybuffer");
+    lua_pushstring(L, dst);
+    lua_pushstring(L, src);
+    lua_call(L, 2, 0);
+}
+
 //点[x,y]から最も近い線分[x0,y0]:[x0+dx,y0+dy]上の点の、距離の2乗と座標を返す関数
 inline std::tuple<double, double, double> distance_line(double x, double y, double x0, double y0, double dx, double dy)
 {
@@ -451,11 +458,8 @@ int bevel_and_emboss(lua_State *L) {
                 pix[i].a = 0xff;
             }
             utl_putpixeldata(L, pix);
-            
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "tmp");
-            lua_pushstring(L, "obj");
-            lua_call(L, 2, 0);
+
+            utl_copybuffer(L, "tmp", "obj");
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
@@ -504,12 +508,8 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, alp2 / 100.0);
             lua_call(L, 5, 0);
 
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "obj");
-            lua_pushstring(L, "tmp");
-            lua_call(L, 2, 0);
+            utl_copybuffer(L, "obj", "tmp");
 
-            
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 pix[i].r = static_cast<uint8_t>(bevel_buffer[i].r * (bevel_buffer[i].a / 255.0) + pix[i].r * (1.0 - bevel_buffer[i].a / 255.0));
@@ -529,10 +529,7 @@ int bevel_and_emboss(lua_State *L) {
             }
             utl_putpixeldata(L, pix);
             
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "tmp");
-            lua_pushstring(L, "obj");
-            lua_call(L, 2, 0);
+            utl_copybuffer(L, "tmp", "obj");
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
@@ -595,12 +592,8 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, alp2 / 100.0);
             lua_call(L, 5, 0);
 
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "obj");
-            lua_pushstring(L, "tmp");
-            lua_call(L, 2, 0);
+            utl_copybuffer(L, "obj", "tmp");
 
-            
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 pix[i].a = bevel_buffer[i].a;
@@ -621,10 +614,7 @@ int bevel_and_emboss(lua_State *L) {
             }
             utl_putpixeldata(L, pix);
             
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "tmp");
-            lua_pushstring(L, "obj");
-            lua_call(L, 2, 0);
+            utl_copybuffer(L, "tmp", "obj");
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
@@ -687,10 +677,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, alp2 / 100.0);
             lua_call(L, 5, 0);
 
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "obj");
-            lua_pushstring(L, "tmp");
-            lua_call(L, 2, 0);
+            utl_copybuffer(L, "obj", "tmp");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
@@ -712,10 +699,7 @@ int bevel_and_emboss(lua_State *L) {
             }
             utl_putpixeldata(L, pix);
             
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "tmp");
-            lua_pushstring(L, "obj");
-            lua_call(L, 2, 0);
+            utl_copybuffer(L, "tmp", "obj");
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
@@ -778,10 +762,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, alp2 / 100.0);
             lua_call(L, 5, 0);
 
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "obj");
-            lua_pushstring(L, "tmp");
-            lua_call(L, 2, 0);
+            utl_copybuffer(L, "obj", "tmp");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
@@ -813,10 +794,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, h);
             lua_call(L, 4, 0);
 
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "obj");
-            lua_pushstring(L, "tmp");
-            lua_call(L, 2, 0);
+            utl_copybuffer(L, "obj", "tmp");
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
@@ -863,10 +841,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, h);
             lua_call(L, 4, 0);
 
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "obj");
-            lua_pushstring(L, "tmp");
-            lua_call(L, 2, 0);
+            utl_copybuffer(L, "obj", "tmp");
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
@@ -928,10 +903,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, h);
             lua_call(L, 4, 0);
 
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "obj");
-            lua_pushstring(L, "tmp");
-            lua_call(L, 2, 0);
+            utl_copybuffer(L, "obj", "tmp");
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
@@ -978,10 +950,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, h);
             lua_call(L, 4, 0);
 
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "obj");
-            lua_pushstring(L, "tmp");
-            lua_call(L, 2, 0);
+            utl_copybuffer(L, "obj", "tmp");
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
@@ -1042,10 +1011,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, h);
             lua_call(L, 4, 0);
 
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "obj");
-            lua_pushstring(L, "tmp");
-            lua_call(L, 2, 0);
+            utl_copybuffer(L, "obj", "tmp");
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
@@ -1092,10 +1058,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, h);
             lua_call(L, 4, 0);
 
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "obj");
-            lua_pushstring(L, "tmp");
-            lua_call(L, 2, 0);
+            utl_copybuffer(L, "obj", "tmp");
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
@@ -1156,10 +1119,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, h);
             lua_call(L, 4, 0);
 
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "obj");
-            lua_pushstring(L, "tmp");
-            lua_call(L, 2, 0);
+            utl_copybuffer(L, "obj", "tmp");
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
@@ -1206,10 +1166,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, h);
             lua_call(L, 4, 0);
 
-            lua_getfield(L, -1, "copybuffer");
-            lua_pushstring(L, "obj");
-            lua_pushstring(L, "tmp");
-            lua_call(L, 2, 0);
+            utl_copybuffer(L, "obj", "tmp");
 
             lua_getfield(L, -1, "setoption");
             lua_pushstring(L, "drawtarget");
