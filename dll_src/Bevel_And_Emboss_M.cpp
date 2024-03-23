@@ -133,6 +133,13 @@ inline void utl_putpixeldata(lua_State *L, void* pix) {
     lua_call(L, 1, 0);
 }
 
+inline void utl_blend(lua_State *L, int ble) {
+    lua_getfield(L, -1, "setoption");
+    lua_pushstring(L, "blend");
+    lua_pushnumber(L, ble);
+    lua_call(L, 2, 0);
+}
+
 //点[x,y]から最も近い線分[x0,y0]:[x0+dx,y0+dy]上の点の、距離の2乗と座標を返す関数
 inline std::tuple<double, double, double> distance_line(double x, double y, double x0, double y0, double dx, double dy)
 {
@@ -471,10 +478,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble1);
-            lua_call(L, 2, 0);
+            utl_blend(L, ble1);
             
             lua_getfield(L, -1, "draw");
             lua_pushnumber(L, 0);
@@ -498,10 +502,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble2);
-            lua_call(L, 2, 0);
+            utl_blend(L, ble2);
             
             lua_getfield(L, -1, "draw");
             lua_pushnumber(L, 0);
@@ -573,11 +574,8 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble1);
-            lua_call(L, 2, 0);
-            
+            utl_blend(L, ble1);
+
             lua_getfield(L, -1, "draw");
             lua_pushnumber(L, 0);
             lua_pushnumber(L, 0);
@@ -607,11 +605,8 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble2);
-            lua_call(L, 2, 0);
-            
+            utl_blend(L, ble2);
+
             lua_getfield(L, -1, "draw");
             lua_pushnumber(L, 0);
             lua_pushnumber(L, 0);
@@ -683,11 +678,8 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble1);
-            lua_call(L, 2, 0);
-            
+            utl_blend(L, ble1);
+
             lua_getfield(L, -1, "draw");
             lua_pushnumber(L, 0);
             lua_pushnumber(L, 0);
@@ -717,11 +709,8 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble2);
-            lua_call(L, 2, 0);
-            
+            utl_blend(L, ble2);
+
             lua_getfield(L, -1, "draw");
             lua_pushnumber(L, 0);
             lua_pushnumber(L, 0);
@@ -792,11 +781,8 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble1);
-            lua_call(L, 2, 0);
-            
+            utl_blend(L, ble1);
+
             lua_getfield(L, -1, "draw");
             lua_pushnumber(L, 0);
             lua_pushnumber(L, 0);
@@ -826,11 +812,8 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble2);
-            lua_call(L, 2, 0);
-            
+            utl_blend(L, ble2);
+
             lua_getfield(L, -1, "draw");
             lua_pushnumber(L, 0);
             lua_pushnumber(L, 0);
@@ -910,10 +893,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble1);
-            lua_call(L, 2, 0);
+            utl_blend(L, ble1);
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
@@ -966,10 +946,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble2);
-            lua_call(L, 2, 0);
+            utl_blend(L, ble2);
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
@@ -1037,10 +1014,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble1);
-            lua_call(L, 2, 0);
+            utl_blend(L, ble1);
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
@@ -1093,10 +1067,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble2);
-            lua_call(L, 2, 0);
+            utl_blend(L, ble2);
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
@@ -1163,10 +1134,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble1);
-            lua_call(L, 2, 0);
+            utl_blend(L, ble1);
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
@@ -1219,10 +1187,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble2);
-            lua_call(L, 2, 0);
+            utl_blend(L, ble2);
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
@@ -1289,10 +1254,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble1);
-            lua_call(L, 2, 0);
+            utl_blend(L, ble1);
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
@@ -1345,10 +1307,7 @@ int bevel_and_emboss(lua_State *L) {
 
             utl_blur(L, blur);
 
-            lua_getfield(L, -1, "setoption");
-            lua_pushstring(L, "blend");
-            lua_pushnumber(L, ble2);
-            lua_call(L, 2, 0);
+            utl_blend(L, ble2);
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
@@ -1556,10 +1515,7 @@ int bevel_and_emboss(lua_State *L) {
         }
     }
 
-    lua_getfield(L, -1, "setoption");
-    lua_pushstring(L, "blend");
-    lua_pushnumber(L, 0);
-    lua_call(L, 2, 0);
+    utl_blend(L, 0);
 
     lua_getfield(L, -1, "setoption");
     lua_pushstring(L, "drawtarget");
