@@ -133,6 +133,14 @@ inline void utl_putpixeldata(lua_State *L, void* pix) {
     lua_call(L, 1, 0);
 }
 
+inline void* utl_getpixeldata(lua_State *L) {
+    lua_getfield(L, -1, "getpixeldata");
+    lua_call(L, 0, 3);
+    void* ptr = lua_touserdata(L, -3);
+    lua_pop(L, 3);
+    return ptr;
+}
+
 inline void utl_blend(lua_State *L, int ble) {
     lua_getfield(L, -1, "setoption");
     lua_pushstring(L, "blend");
@@ -218,13 +226,9 @@ int bevel_and_emboss(lua_State *L) {
     //キャッシュテキストスクリプト用の例外処理（サイズ0の画像でも処理が走ってエラーを起こすため）
     if(w * h == 0)
         return 0;
-    
-    lua_getfield(L, -1, "getpixeldata");
-    lua_call(L, 0, 3);
 
     std::unique_ptr<Pixel_BGRA[]> bevel_buffer = std::make_unique_for_overwrite<Pixel_BGRA[]>(w * h);
-    memcpy(bevel_buffer.get(), lua_touserdata(L, -3), sizeof(Pixel_BGRA) * w * h);
-    lua_pop(L, 3);
+    memcpy(bevel_buffer.get(), utl_getpixeldata(L), sizeof(Pixel_BGRA) * w * h);
 
     //辺は滑らかになるが頂点が丸くなるので一長一短
     utl_blur(L, preblur);
@@ -232,11 +236,8 @@ int bevel_and_emboss(lua_State *L) {
     //ピクセルのアルファ値,輪郭までの最短距離,最短輪郭の座標X,Y,輪郭の内外判定値,グレスケ(-1～1)
     std::unique_ptr<Pixel_Info[]> pix_info = std::make_unique_for_overwrite<Pixel_Info[]>(w * h);
 
-    lua_getfield(L, -1, "getpixeldata");
-    lua_call(L, 0, 3);
-
-    Pixel_BGRA* pixel = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-    lua_pop(L, 3);
+    Pixel_BGRA* pixel = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
+    
     std::unique_ptr<bool[]> border_ans = std::make_unique_for_overwrite<bool[]>(w * h);
     
     for(int j = 0; j < h; j++) {
@@ -442,10 +443,7 @@ int bevel_and_emboss(lua_State *L) {
     switch(style) {
         case 0: //ベベル(外側)
         {
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 pix[i].r = bgcol_r;
                 pix[i].g = bgcol_g;
@@ -464,10 +462,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushstring(L, "tempbuffer");
             lua_call(L, 2, 0);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 pix[i].r = col1_r;
                 pix[i].g = col1_g;
@@ -488,10 +483,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, alp1 / 100.0);
             lua_call(L, 5, 0);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 pix[i].r = col2_r;
                 pix[i].g = col2_g;
@@ -518,10 +510,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_call(L, 2, 0);
 
             
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 pix[i].r = static_cast<uint8_t>(bevel_buffer[i].r * (bevel_buffer[i].a / 255.0) + pix[i].r * (1.0 - bevel_buffer[i].a / 255.0));
                 pix[i].g = static_cast<uint8_t>(bevel_buffer[i].g * (bevel_buffer[i].a / 255.0) + pix[i].g * (1.0 - bevel_buffer[i].a / 255.0));
@@ -534,10 +523,7 @@ int bevel_and_emboss(lua_State *L) {
         }
         case 1: //ベベル(内側)
         {
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 pix[i].a = 0xff;
             }
@@ -553,10 +539,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushstring(L, "tempbuffer");
             lua_call(L, 2, 0);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col1_r;
@@ -584,10 +567,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, alp1 / 100.0);
             lua_call(L, 5, 0);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col2_r;
@@ -621,10 +601,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_call(L, 2, 0);
 
             
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 pix[i].a = bevel_buffer[i].a;
             }
@@ -635,10 +612,7 @@ int bevel_and_emboss(lua_State *L) {
         }
         case 2: //エンボス
         {
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 pix[i].r = static_cast<uint8_t>(pix[i].r * (pix[i].a / 255.0) + bgcol_r * (1 - pix[i].a / 255.0));
                 pix[i].g = static_cast<uint8_t>(pix[i].g * (pix[i].a / 255.0) + bgcol_g * (1 - pix[i].a / 255.0));
@@ -657,10 +631,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushstring(L, "tempbuffer");
             lua_call(L, 2, 0);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col1_r;
@@ -688,10 +659,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, alp1 / 100.0);
             lua_call(L, 5, 0);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col2_r;
@@ -724,10 +692,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushstring(L, "tmp");
             lua_call(L, 2, 0);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255.0));
             }
@@ -738,10 +703,7 @@ int bevel_and_emboss(lua_State *L) {
         }
         case 3: //ピローエンボス
         {
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 pix[i].r = static_cast<uint8_t>(pix[i].r * (pix[i].a / 255.0) + bgcol_r * (1 - pix[i].a / 255.0));
                 pix[i].g = static_cast<uint8_t>(pix[i].g * (pix[i].a / 255.0) + bgcol_g * (1 - pix[i].a / 255.0));
@@ -760,10 +722,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushstring(L, "tempbuffer");
             lua_call(L, 2, 0);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col1_r;
@@ -791,10 +750,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushnumber(L, alp1 / 100.0);
             lua_call(L, 5, 0);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col2_r;
@@ -827,10 +783,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_pushstring(L, "tmp");
             lua_call(L, 2, 0);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255.0));
             }
@@ -872,10 +825,7 @@ int bevel_and_emboss(lua_State *L) {
             
             setObjField(L, obj);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col1_r;
@@ -925,10 +875,7 @@ int bevel_and_emboss(lua_State *L) {
             
             setObjField(L, obj);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col2_r;
@@ -993,10 +940,7 @@ int bevel_and_emboss(lua_State *L) {
             
             setObjField(L, obj);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col1_r;
@@ -1046,10 +990,7 @@ int bevel_and_emboss(lua_State *L) {
             
             setObjField(L, obj);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col2_r;
@@ -1113,10 +1054,7 @@ int bevel_and_emboss(lua_State *L) {
             
             setObjField(L, obj);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col1_r;
@@ -1166,10 +1104,7 @@ int bevel_and_emboss(lua_State *L) {
             
             setObjField(L, obj);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col2_r;
@@ -1233,10 +1168,7 @@ int bevel_and_emboss(lua_State *L) {
             
             setObjField(L, obj);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col1_r;
@@ -1286,10 +1218,7 @@ int bevel_and_emboss(lua_State *L) {
             
             setObjField(L, obj);
 
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col2_r;
@@ -1323,10 +1252,7 @@ int bevel_and_emboss(lua_State *L) {
         }
         case 8: //ベベル(外側) ハイライトのみ
         {
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col1_r;
@@ -1347,10 +1273,7 @@ int bevel_and_emboss(lua_State *L) {
         }
         case 9: //ベベル(内側) ハイライトのみ
         {
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col1_r;
@@ -1371,10 +1294,7 @@ int bevel_and_emboss(lua_State *L) {
         }
         case 10: //エンボス ハイライトのみ
         {
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col1_r;
@@ -1395,10 +1315,7 @@ int bevel_and_emboss(lua_State *L) {
         }
         case 11: //ピローエンボス ハイライトのみ
         {
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col1_r;
@@ -1419,10 +1336,7 @@ int bevel_and_emboss(lua_State *L) {
         }
         case 12: //ベベル(外側) シャドウのみ
         {
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col2_r;
@@ -1443,10 +1357,7 @@ int bevel_and_emboss(lua_State *L) {
         }
         case 13: //ベベル(内側) シャドウのみ
         {
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col2_r;
@@ -1467,10 +1378,7 @@ int bevel_and_emboss(lua_State *L) {
         }
         case 14: //エンボス シャドウのみ
         {
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col2_r;
@@ -1491,10 +1399,7 @@ int bevel_and_emboss(lua_State *L) {
         }
         case 15: //ピローエンボス シャドウのみ
         {
-            lua_getfield(L, -1, "getpixeldata");
-            lua_call(L, 0, 3);
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(lua_touserdata(L, -3));
-            lua_pop(L, 3);
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
             for(int i = 0; i < w * h; i++) {
                 if(pix_info[i].dis <= bev_w) {
                     pix[i].r = col2_r;
