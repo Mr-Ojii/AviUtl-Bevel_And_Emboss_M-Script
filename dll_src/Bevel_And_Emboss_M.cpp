@@ -361,21 +361,24 @@ int bevel_and_emboss(lua_State *L) {
 
     //近傍の透明度を参照して、輪郭を小数点以下で補正
     for(int i = 0; i < p.size(); i++) {
-        for(int j = p[i].size() - 1; j >= 0; j--) {
-            Point point = p[i][j];
+        auto& pi = p[i];
+        for(int j = pi.size() - 1; j >= 0; j--) {
+            const Point& point = pi[j];
             int index = point.y * w + point.x;
             double a5 = pix_info[index].alpha, a6 = pix_info[index + 1].alpha, a4 = pix_info[index - 1].alpha, a2 = pix_info[index + w].alpha, a8 = pix_info[index - w].alpha;
             //何故か全周囲が閾値以上のピクセルが時々あるので削除
             if(std::min({a5, a6, a4, a2, a8}) >= a_th) {
-                //vector.eraseは割と重いけど致し方なし
-                p[i].erase(p[i].begin() + j);
+                // 削除用としてマーク
+                pi[j].x = HUGE_VAL;
             } else {
                 double dx = std::clamp(a6 < a_th ? (a5 - a_th) / (a5 - a6) : a4 < a_th ? (a5 - a_th) / (a4 - a5) : 0.0, -1.0, 1.0);
                 double dy = std::clamp(a2 < a_th ? (a5 - a_th) / (a5 - a2) : a8 < a_th ? (a5 - a_th) / (a8 - a5) : 0.0, -1.0, 1.0);
-                p[i][j].x += dx / (1 + std::abs(dy / dx)); 
-                p[i][j].y += dy / (1 + std::abs(dx / dy));
+                pi[j].x += dx / (1 + std::abs(dy / dx)); 
+                pi[j].y += dy / (1 + std::abs(dx / dy));
             }
         }
+        // マークされたのを削除
+        std::erase_if(pi, [](const auto& pij){ return pij.x == HUGE_VAL; });
     }
 
     //輪郭平滑化処理
