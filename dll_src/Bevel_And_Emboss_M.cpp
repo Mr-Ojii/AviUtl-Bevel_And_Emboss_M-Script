@@ -495,12 +495,14 @@ int bevel_and_emboss(lua_State *L) {
     }
 
     //いくつかの変数を使い易い形に変換
-    for(int j = 0; j < h; j++) {
-        for(int i = 0; i < w; i++) {
-            Pixel_Info* info = &pix_info[j * w + i];
+    multi_thread([&](int thread_id, int thread_num) {
+        size_t start = size * thread_id / thread_num;
+        size_t end = size * (thread_id + 1) / thread_num;
+        for (size_t i = start; i < end; i++) {
+            Pixel_Info* info = &pix_info[i];
             info->dis = std::sqrt(info->dis);
-            info->x = (info->x - (i - 0.5)) / info->dis;
-            info->y = (info->y - (j - 0.5)) / info->dis;
+            info->x = (info->x - (i % w - 0.5)) / info->dis;
+            info->y = (info->y - (i / w - 0.5)) / info->dis;
 
             // cos(atan2(y, x) + r)
             // = cos(atan2(y, x)) * cos(r) - sin(atan2(y, x)) * sin(r)
@@ -508,7 +510,7 @@ int bevel_and_emboss(lua_State *L) {
             // = x * cos(r) - y * sin(r)
             info->gray = (info->x * cos_rot - info->y * sin_rot) * high * (info->line < 0 ? -1 : 1);
         }
-    }
+    });
 
     //四隅の色から中心の色を求めるアンチエイリアス処理
     for(int j = 1; j < h - 1; j++) {
