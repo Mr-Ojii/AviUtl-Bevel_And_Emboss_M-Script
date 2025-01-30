@@ -1,0 +1,16 @@
+root = true
+
+[*]
+charset = unset
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.cpp]
+charset = utf-8
+indent_size = 4
+
+[*.{obj,anm,tra}]
+
+[*.md]
+trim_trailing_whitespace = false

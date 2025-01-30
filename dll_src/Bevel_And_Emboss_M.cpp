@@ -206,7 +206,7 @@ static HMODULE get_utl_module() {
 
 static void multi_thread(std::function<void(int, int)>&& f, bool single = false) {
     if (exec_multi_thread_func && !single) {
-        exec_multi_thread_func([](int thread_id, int thread_num, void* param1, void* param2) { 
+        exec_multi_thread_func([](int thread_id, int thread_num, void* param1, void* param2) {
             (*reinterpret_cast<std::function<void(int, int)>*>(param1))(thread_id, thread_num);
         }, &f, nullptr);
     } else {
@@ -313,13 +313,13 @@ int bevel_and_emboss(lua_State *L) {
     std::unique_ptr<Pixel_Info[]> pix_info = std::make_unique_for_overwrite<Pixel_Info[]>(size);
 
     Pixel_BGRA* pixel = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-    
+
     std::unique_ptr<bool[]> border_ans = std::make_unique_for_overwrite<bool[]>(size);
-    
+
     for(int j = 0; j < h; j++) {
         for(int i = 0; i < w; i++) {
             pix_info[j * w + i] = {pixel[j * w + i].a, HUGE_VAL, static_cast<double>(i), static_cast<double>(j), 1, 0};
-            
+
             //rikky_module.borderingも一緒に
             //端か、端ではなかった場合上下左右がth以下だった場合
             if(a_th < pixel[j * w + i].a && ((i == 0 || j == 0 || i == w-1 || j == h-1) || (pixel[j * w + i - 1].a <= a_th || pixel[j * w + i + 1].a <= a_th || pixel[j * w + i - w].a <= a_th || pixel[j * w + i + w].a <= a_th)))
@@ -348,7 +348,7 @@ int bevel_and_emboss(lua_State *L) {
 
         //外側判定
         bool ccw = (tmp_point.y == 0 || (pixel[static_cast<int>((tmp_point.y - 1) * w + tmp_point.x)].a <= a_th));
-        
+
         while(true) {
             pb.push_back(tmp_point);
             border_ans[tmp_point.y * w + tmp_point.x] = false;
@@ -394,7 +394,7 @@ int bevel_and_emboss(lua_State *L) {
 
             if(next_point.x == -1 || next_point.y == -1)
                 break;
-            
+
             tmp_point = next_point;
         }
         p.push_back(std::move(pb));
@@ -416,7 +416,7 @@ int bevel_and_emboss(lua_State *L) {
             } else {
                 double dx = std::clamp(a6 < a_th ? (a5 - a_th) / (a5 - a6) : a4 < a_th ? (a5 - a_th) / (a4 - a5) : 0.0, -1.0, 1.0);
                 double dy = std::clamp(a2 < a_th ? (a5 - a_th) / (a5 - a2) : a8 < a_th ? (a5 - a_th) / (a8 - a5) : 0.0, -1.0, 1.0);
-                pi[j].x += dx / (1 + std::abs(dy / dx)); 
+                pi[j].x += dx / (1 + std::abs(dy / dx));
                 pi[j].y += dy / (1 + std::abs(dx / dy));
             }
         }
@@ -439,7 +439,7 @@ int bevel_and_emboss(lua_State *L) {
             bufy = y0;
         }
     }
-    
+
     for(int i = 0; i < p.size(); i++) {
         auto& pi = p[i];
         size_t s[2] = {pi.size() - 2, pi.size() - 1};
@@ -546,7 +546,7 @@ int bevel_and_emboss(lua_State *L) {
             utl_drawtarget(L, "tempbuffer");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -580,7 +580,7 @@ int bevel_and_emboss(lua_State *L) {
             utl_copybuffer(L, "obj", "tmp");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -664,7 +664,7 @@ int bevel_and_emboss(lua_State *L) {
                         pix[i].a = bevel_buffer[i].a;
                     }
                 });
-            
+
             utl_putpixeldata(L, pix);
             break;
         }
@@ -686,7 +686,7 @@ int bevel_and_emboss(lua_State *L) {
             utl_drawtarget(L, "tempbuffer");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -710,7 +710,7 @@ int bevel_and_emboss(lua_State *L) {
             utl_draw(L, alp1);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -735,7 +735,7 @@ int bevel_and_emboss(lua_State *L) {
             utl_copybuffer(L, "obj", "tmp");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -749,7 +749,7 @@ int bevel_and_emboss(lua_State *L) {
         case 3: //ピローエンボス
         {
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -765,7 +765,7 @@ int bevel_and_emboss(lua_State *L) {
             utl_drawtarget(L, "tempbuffer");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -789,7 +789,7 @@ int bevel_and_emboss(lua_State *L) {
             utl_draw(L, alp1);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -814,7 +814,7 @@ int bevel_and_emboss(lua_State *L) {
             utl_copybuffer(L, "obj", "tmp");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -845,7 +845,7 @@ int bevel_and_emboss(lua_State *L) {
             setObjField(L, obj);
 
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -878,7 +878,7 @@ int bevel_and_emboss(lua_State *L) {
             setObjField(L, obj);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -923,7 +923,7 @@ int bevel_and_emboss(lua_State *L) {
             setObjField(L, obj);
 
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -956,7 +956,7 @@ int bevel_and_emboss(lua_State *L) {
             setObjField(L, obj);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -980,7 +980,7 @@ int bevel_and_emboss(lua_State *L) {
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
-            
+
             utl_draw(L, alp2);
             break;
         }
@@ -1001,7 +1001,7 @@ int bevel_and_emboss(lua_State *L) {
             setObjField(L, obj);
 
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -1034,7 +1034,7 @@ int bevel_and_emboss(lua_State *L) {
             setObjField(L, obj);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -1079,7 +1079,7 @@ int bevel_and_emboss(lua_State *L) {
             setObjField(L, obj);
 
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -1103,16 +1103,16 @@ int bevel_and_emboss(lua_State *L) {
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
-            
+
             utl_draw(L, alp1);
             utl_temptarget(L, w, h);
             utl_copybuffer(L, "obj", "tmp");
             utl_drawtarget(L, "framebuffer");
-            
+
             setObjField(L, obj);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -1136,14 +1136,14 @@ int bevel_and_emboss(lua_State *L) {
 
             lua_getfield(L, -1, "effect");
             lua_call(L, 0, 0);
-            
+
             utl_draw(L, alp2);
             break;
         }
         case 8: //ベベル(外側) ハイライトのみ
         {
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -1168,7 +1168,7 @@ int bevel_and_emboss(lua_State *L) {
         case 9: //ベベル(内側) ハイライトのみ
         {
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -1193,7 +1193,7 @@ int bevel_and_emboss(lua_State *L) {
         case 10: //エンボス ハイライトのみ
         {
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;
@@ -1242,7 +1242,7 @@ int bevel_and_emboss(lua_State *L) {
         case 12: //ベベル(外側) シャドウのみ
         {
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            
+
             multi_thread([&](int thread_id, int thread_num) {
                 size_t start = size * thread_id / thread_num;
                 size_t end = size * (thread_id + 1) / thread_num;

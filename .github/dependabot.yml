@@ -16,4 +16,4 @@ updates:
         patterns:
           - "actions/upload-artifact"
           - "actions/download-artifact"
-          
+
