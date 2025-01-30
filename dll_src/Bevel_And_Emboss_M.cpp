@@ -9,8 +9,10 @@
 #include <cmath>
 #include <chrono>
 #include <iostream>
+#include <functional>
 #include <windows.h>
 #include "lua.hpp"
+#include "aviutl_exedit_sdk/aviutl.hpp"
 
 struct Pixel_BGRA {
     uint8_t b, g, r, a;
@@ -115,16 +117,16 @@ inline double rad(double deg) {
 }
 
 inline double squared(double num) {
-    //std::pow(x, 2)‚Í’x‚¢
+    //std::pow(x, 2)ã¯é…ã„
     return num * num;
 }
 
 inline void utl_blur(lua_State *L, double n_blur) {
     lua_getfield(L, -1, "effect");
-    lua_pushstring(L, "‚Ú‚©‚µ");
-    lua_pushstring(L, "”ÍˆÍ");
+    lua_pushstring(L, "ã¼ã‹ã—");
+    lua_pushstring(L, "ç¯„å›²");
     lua_pushnumber(L, n_blur);
-    lua_pushstring(L, "ƒTƒCƒYŒÅ’è");
+    lua_pushstring(L, "ã‚µã‚¤ã‚ºå›ºå®š");
     lua_pushnumber(L, 1);
     lua_call(L, 5, 0);
 }
@@ -183,17 +185,55 @@ inline void utl_temptarget(lua_State *L, int w, int h) {
     lua_call(L, 4, 0);
 }
 
-//“_[x,y]‚©‚çÅ‚à‹ß‚¢ü•ª[x0,y0]:[x0+dx,y0+dy]ã‚Ì“_‚ÌA‹——£‚Ì2æ‚ÆÀ•W‚ğ•Ô‚·ŠÖ”
+//ç‚¹[x,y]ã‹ã‚‰æœ€ã‚‚è¿‘ã„ç·šåˆ†[x0,y0]:[x0+dx,y0+dy]ä¸Šã®ç‚¹ã®ã€è·é›¢ã®2ä¹—ã¨åº§æ¨™ã‚’è¿”ã™é–¢æ•°
 inline std::tuple<double, double, double> distance_line(double x, double y, double x0, double y0, double dx, double dy)
 {
-    //t<=0‚É‚Â‚¢‚Ä‚ÍAŸ‚Ìƒ‹[ƒv‚Åã‘‚«‚³‚ê‚é‚Ì‚ÅŒvZ‚Ì•K—v–³‚µ
+    //t<=0ã«ã¤ã„ã¦ã¯ã€æ¬¡ã®ãƒ«ãƒ¼ãƒ—ã§ä¸Šæ›¸ãã•ã‚Œã‚‹ã®ã§è¨ˆç®—ã®å¿…è¦ç„¡ã—
     double t = std::min(1.0, (dx * (x - x0) + dy * (y - y0)) / (dx * dx + dy * dy));
-    //‚»‚à‚»‚àt<=0‚Æ‚È‚éƒsƒNƒZƒ‹‚Íif‚Å’e‚¢‚Ä‚é
+    //ãã‚‚ãã‚‚t<=0ã¨ãªã‚‹ãƒ”ã‚¯ã‚»ãƒ«ã¯ifã§å¼¾ã„ã¦ã‚‹
     return std::make_tuple(std::abs(squared(x0 + dx * t - x) + squared(y0 + dy * t - y)), x0 + dx * t, y0 + dy * t);
 }
 
+static decltype(AviUtl::ExFunc::exec_multi_thread_func) exec_multi_thread_func = nullptr;
+static bool first = true;
+
+static HMODULE get_utl_module() {
+    HMODULE module = GetModuleHandle("aviutl.exe");
+    if (!module)
+        module = GetModuleHandle("aviutl_dark.exe");
+    return module;
+}
+
+static void multi_thread(std::function<void(int, int)>&& f, bool single = false) {
+    if (exec_multi_thread_func && !single) {
+        exec_multi_thread_func([](int thread_id, int thread_num, void* param1, void* param2) { 
+            (*reinterpret_cast<std::function<void(int, int)>*>(param1))(thread_id, thread_num);
+        }, &f, nullptr);
+    } else {
+        f(0, 1);
+    }
+}
+
+static constexpr std::string_view aviutl_version = "1.10";
 
 int bevel_and_emboss(lua_State *L) {
+    if (first) {
+        char* aviutl_base = reinterpret_cast<char*>(get_utl_module());
+        if (aviutl_base) {
+            if (!strncmp(aviutl_base + 0x0007425c, aviutl_version.data(), aviutl_version.size())) {
+                exec_multi_thread_func = reinterpret_cast<decltype(exec_multi_thread_func)>(aviutl_base + 0x00022220);
+                if (!exec_multi_thread_func) {
+                    fprintf(stderr, "Bevel_And_Emboss_M: ãƒãƒ«ãƒã‚¹ãƒ¬ãƒƒãƒ‰é–¢æ•°ã®å–å¾—ã«å¤±æ•—ã—ã¾ã—ãŸã€‚ãƒãƒ«ãƒã‚¹ãƒ¬ãƒƒãƒ‰æ©Ÿèƒ½ã‚’ç„¡åŠ¹åŒ–ã—ã¾ã™ã€‚\n");
+                }
+            } else {
+                fprintf(stderr, "Bevel_And_Emboss_M: ãƒãƒ«ãƒã‚¹ãƒ¬ãƒƒãƒ‰æ©Ÿèƒ½ã¯ AviUtl version 1.10 ã§ã®ã¿ä½¿ç”¨ã§ãã¾ã™ã€‚ãƒãƒ«ãƒã‚¹ãƒ¬ãƒƒãƒ‰æ©Ÿèƒ½ã‚’ç„¡åŠ¹åŒ–ã—ã¾ã™ã€‚");
+            }
+        } else {
+            fprintf(stderr, "Bevel_And_Emboss_M: AviUtl ã®ãƒãƒ³ãƒ‰ãƒ«å–å¾—ã«å¤±æ•—ã—ã¾ã—ãŸã€‚ãƒãƒ«ãƒã‚¹ãƒ¬ãƒƒãƒ‰æ©Ÿèƒ½ã‚’ç„¡åŠ¹åŒ–ã—ã¾ã™ã€‚");
+        }
+        first = false;
+    }
+
     int a_th = lua_tointeger(L, 1);
     double bev_w = lua_tonumber(L, 2);
     double rot = lua_tonumber(L, 3);
@@ -210,7 +250,7 @@ int bevel_and_emboss(lua_State *L) {
     double preblur = lua_tonumber(L, 14);
     double isline = lua_tonumber(L, 15);
 
-    // –‘OŒvZ‚Å‚«‚é‚à‚Ì‚ÍŒvZ‚µ‚Ä‚¨‚­
+    // äº‹å‰è¨ˆç®—ã§ãã‚‹ã‚‚ã®ã¯è¨ˆç®—ã—ã¦ãŠã
     high = std::cos(rad(high));
     rot = rad(rot);
     double sin_rot = std::sin(rot);
@@ -231,7 +271,7 @@ int bevel_and_emboss(lua_State *L) {
     if(bev_w <= 0 || style > 15)
         return 0;
 
-    //4‹ß–T‚ğæ“¾‚·‚é‚ÉOutOfIndex‚É‚µ‚È‚¢‚½‚ß‚Ìƒ}[ƒWƒ“&‚Ú‚©‚µ‚É—ÖŠs‚ª’[‚Å“rØ‚ê‚é‚Ì‚ğ‰ñ”ğ
+    //4è¿‘å‚ã‚’å–å¾—ã™ã‚‹æ™‚ã«OutOfIndexã«ã—ãªã„ãŸã‚ã®ãƒãƒ¼ã‚¸ãƒ³&ã¼ã‹ã—æ™‚ã«è¼ªéƒ­ãŒç«¯ã§é€”åˆ‡ã‚Œã‚‹ã®ã‚’å›é¿
     lua_getglobal(L, "obj");
 
     double initblur = preblur + 1;
@@ -239,48 +279,49 @@ int bevel_and_emboss(lua_State *L) {
         initblur += std::ceil(bev_w);
 
     lua_getfield(L, -1, "effect");
-    lua_pushstring(L, "—ÌˆæŠg’£");
-    lua_pushstring(L, "ã");
+    lua_pushstring(L, "é ˜åŸŸæ‹¡å¼µ");
+    lua_pushstring(L, "ä¸Š");
     lua_pushnumber(L, initblur);
-    lua_pushstring(L, "‰º");
+    lua_pushstring(L, "ä¸‹");
     lua_pushnumber(L, initblur);
-    lua_pushstring(L, "¶");
+    lua_pushstring(L, "å·¦");
     lua_pushnumber(L, initblur);
-    lua_pushstring(L, "‰E");
+    lua_pushstring(L, "å³");
     lua_pushnumber(L, initblur);
     lua_call(L, 9, 0);
 
-    //"getpixeldata"‚Åw,h‚Æ‚ê‚é‚¶‚á‚ñI
-    //‚Æv‚Á‚½‚ªAexedit.auf‘¤‚Å—áŠO‚ª”­¶‚·‚é—á‚ª‚ ‚é‚Ì‚ÅAgetpixel‚ğŒÄ‚Ô
+    //"getpixeldata"ã§w,hã¨ã‚Œã‚‹ã˜ã‚ƒã‚“ï¼
+    //ã¨æ€ã£ãŸãŒã€exedit.aufå´ã§ä¾‹å¤–ãŒç™ºç”Ÿã™ã‚‹ä¾‹ãŒã‚ã‚‹ã®ã§ã€getpixelã‚’å‘¼ã¶
     lua_getfield(L, -1, "getpixel");
     lua_call(L, 0, 2);
     int w = lua_tointeger(L, -2);
     int h = lua_tointeger(L, -1);
+    size_t size = w * h;
     lua_pop(L, 2);
 
-    //ƒLƒƒƒbƒVƒ…ƒeƒLƒXƒgƒXƒNƒŠƒvƒg—p‚Ì—áŠOˆ—iƒTƒCƒY0‚Ì‰æ‘œ‚Å‚àˆ—‚ª‘–‚Á‚ÄƒGƒ‰[‚ğ‹N‚±‚·‚½‚ßj
-    if(w * h == 0)
+    //ã‚­ãƒ£ãƒƒã‚·ãƒ¥ãƒ†ã‚­ã‚¹ãƒˆã‚¹ã‚¯ãƒªãƒ—ãƒˆç”¨ã®ä¾‹å¤–å‡¦ç†ï¼ˆã‚µã‚¤ã‚º0ã®ç”»åƒã§ã‚‚å‡¦ç†ãŒèµ°ã£ã¦ã‚¨ãƒ©ãƒ¼ã‚’èµ·ã“ã™ãŸã‚ï¼‰
+    if(size == 0)
         return 0;
 
-    std::unique_ptr<Pixel_BGRA[]> bevel_buffer = std::make_unique_for_overwrite<Pixel_BGRA[]>(w * h);
-    memcpy(bevel_buffer.get(), utl_getpixeldata(L), sizeof(Pixel_BGRA) * w * h);
+    std::unique_ptr<Pixel_BGRA[]> bevel_buffer = std::make_unique_for_overwrite<Pixel_BGRA[]>(size);
+    memcpy(bevel_buffer.get(), utl_getpixeldata(L), sizeof(Pixel_BGRA) * size);
 
-    //•Ó‚ÍŠŠ‚ç‚©‚É‚È‚é‚ª’¸“_‚ªŠÛ‚­‚È‚é‚Ì‚Åˆê’·ˆê’Z
+    //è¾ºã¯æ»‘ã‚‰ã‹ã«ãªã‚‹ãŒé ‚ç‚¹ãŒä¸¸ããªã‚‹ã®ã§ä¸€é•·ä¸€çŸ­
     utl_blur(L, preblur);
 
-    //ƒsƒNƒZƒ‹‚ÌƒAƒ‹ƒtƒ@’l,—ÖŠs‚Ü‚Å‚ÌÅ’Z‹——£,Å’Z—ÖŠs‚ÌÀ•WX,Y,—ÖŠs‚Ì“àŠO”»’è’l,ƒOƒŒƒXƒP(-1`1)
-    std::unique_ptr<Pixel_Info[]> pix_info = std::make_unique_for_overwrite<Pixel_Info[]>(w * h);
+    //ãƒ”ã‚¯ã‚»ãƒ«ã®ã‚¢ãƒ«ãƒ•ã‚¡å€¤,è¼ªéƒ­ã¾ã§ã®æœ€çŸ­è·é›¢,æœ€çŸ­è¼ªéƒ­ã®åº§æ¨™X,Y,è¼ªéƒ­ã®å†…å¤–åˆ¤å®šå€¤,ã‚°ãƒ¬ã‚¹ã‚±(-1ï½1)
+    std::unique_ptr<Pixel_Info[]> pix_info = std::make_unique_for_overwrite<Pixel_Info[]>(size);
 
     Pixel_BGRA* pixel = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
     
-    std::unique_ptr<bool[]> border_ans = std::make_unique_for_overwrite<bool[]>(w * h);
+    std::unique_ptr<bool[]> border_ans = std::make_unique_for_overwrite<bool[]>(size);
     
     for(int j = 0; j < h; j++) {
         for(int i = 0; i < w; i++) {
             pix_info[j * w + i] = {pixel[j * w + i].a, HUGE_VAL, static_cast<double>(i), static_cast<double>(j), 1, 0};
             
-            //rikky_module.bordering‚àˆê‚É
-            //’[‚©A’[‚Å‚Í‚È‚©‚Á‚½ê‡ã‰º¶‰E‚ªthˆÈ‰º‚¾‚Á‚½ê‡
+            //rikky_module.borderingã‚‚ä¸€ç·’ã«
+            //ç«¯ã‹ã€ç«¯ã§ã¯ãªã‹ã£ãŸå ´åˆä¸Šä¸‹å·¦å³ãŒthä»¥ä¸‹ã ã£ãŸå ´åˆ
             if(a_th < pixel[j * w + i].a && ((i == 0 || j == 0 || i == w-1 || j == h-1) || (pixel[j * w + i - 1].a <= a_th || pixel[j * w + i + 1].a <= a_th || pixel[j * w + i - w].a <= a_th || pixel[j * w + i + w].a <= a_th)))
                 border_ans[j * w + i] = true;
             else
@@ -295,7 +336,7 @@ int bevel_and_emboss(lua_State *L) {
     {
         std::vector<Point> pb;
         Point tmp_point = {-1, -1};
-        for(; border_i < w * h; border_i++) {
+        for(; border_i < size; border_i++) {
             if(border_ans[border_i]) {
                 tmp_point.x = border_i % w;
                 tmp_point.y = border_i / w;
@@ -305,7 +346,7 @@ int bevel_and_emboss(lua_State *L) {
         if(tmp_point.x == -1 || tmp_point.y == -1)
             break;
 
-        //ŠO‘¤”»’è
+        //å¤–å´åˆ¤å®š
         bool ccw = (tmp_point.y == 0 || (pixel[static_cast<int>((tmp_point.y - 1) * w + tmp_point.x)].a <= a_th));
         
         while(true) {
@@ -314,7 +355,7 @@ int bevel_and_emboss(lua_State *L) {
             Point next_point = {-1, -1};
 
             if(ccw) {
-                //”½Œv‰ñ‚è ¶‚©‚ç”½Œv‰ñ‚è‚Å’Tõ
+                //åæ™‚è¨ˆå›ã‚Š å·¦ã‹ã‚‰åæ™‚è¨ˆå›ã‚Šã§æ¢ç´¢
                 if(tmp_point.x != 0 && border_ans[tmp_point.y * w + tmp_point.x - 1])
                     next_point = {tmp_point.x - 1, tmp_point.y};
                 else if(tmp_point.y != h - 1 && tmp_point.x != 0 &&  border_ans[(tmp_point.y + 1) * w + tmp_point.x - 1])
@@ -332,7 +373,7 @@ int bevel_and_emboss(lua_State *L) {
                 else if(tmp_point.y != 0 && tmp_point.x != 0 &&  border_ans[(tmp_point.y - 1) * w + tmp_point.x - 1])
                     next_point = {tmp_point.x - 1, tmp_point.y - 1};
             } else {
-                //Œv‰ñ‚è ‰E‚©‚çŒv‰ñ‚è‚Å’Tõ
+                //æ™‚è¨ˆå›ã‚Š å³ã‹ã‚‰æ™‚è¨ˆå›ã‚Šã§æ¢ç´¢
                 if(tmp_point.x != w - 1 && border_ans[tmp_point.y * w + tmp_point.x + 1])
                     next_point = {tmp_point.x + 1, tmp_point.y};
                 else if(tmp_point.y != h - 1 && tmp_point.x != w - 1 && border_ans[(tmp_point.y + 1) * w + tmp_point.x + 1])
@@ -361,16 +402,16 @@ int bevel_and_emboss(lua_State *L) {
 
     utl_putpixeldata(L, bevel_buffer.get());
 
-    //‹ß–T‚Ì“§–¾“x‚ğQÆ‚µ‚ÄA—ÖŠs‚ğ¬”“_ˆÈ‰º‚Å•â³
+    //è¿‘å‚ã®é€æ˜åº¦ã‚’å‚ç…§ã—ã¦ã€è¼ªéƒ­ã‚’å°æ•°ç‚¹ä»¥ä¸‹ã§è£œæ­£
     for(int i = 0; i < p.size(); i++) {
         auto& pi = p[i];
         for(int j = pi.size() - 1; j >= 0; j--) {
             const Point& point = pi[j];
             int index = point.y * w + point.x;
             double a5 = pix_info[index].alpha, a6 = pix_info[index + 1].alpha, a4 = pix_info[index - 1].alpha, a2 = pix_info[index + w].alpha, a8 = pix_info[index - w].alpha;
-            //‰½ŒÌ‚©‘SüˆÍ‚ªè‡’lˆÈã‚ÌƒsƒNƒZƒ‹‚ªX‚ ‚é‚Ì‚Åíœ
+            //ä½•æ•…ã‹å…¨å‘¨å›²ãŒé–¾å€¤ä»¥ä¸Šã®ãƒ”ã‚¯ã‚»ãƒ«ãŒæ™‚ã€…ã‚ã‚‹ã®ã§å‰Šé™¤
             if(std::min({a5, a6, a4, a2, a8}) >= a_th) {
-                // íœ—p‚Æ‚µ‚Äƒ}[ƒN
+                // å‰Šé™¤ç”¨ã¨ã—ã¦ãƒãƒ¼ã‚¯
                 pi[j].x = HUGE_VAL;
             } else {
                 double dx = std::clamp(a6 < a_th ? (a5 - a_th) / (a5 - a6) : a4 < a_th ? (a5 - a_th) / (a4 - a5) : 0.0, -1.0, 1.0);
@@ -379,12 +420,12 @@ int bevel_and_emboss(lua_State *L) {
                 pi[j].y += dy / (1 + std::abs(dx / dy));
             }
         }
-        // ƒ}[ƒN‚³‚ê‚½‚Ì‚ğíœ
+        // ãƒãƒ¼ã‚¯ã•ã‚ŒãŸã®ã‚’å‰Šé™¤
         std::erase_if(pi, [](const auto& pij){ return pij.x == HUGE_VAL; });
     }
 
-    //—ÖŠs•½ŠŠ‰»ˆ—
-    //“ä‚Ì’è”iª‹’–³‚µ)
+    //è¼ªéƒ­å¹³æ»‘åŒ–å‡¦ç†
+    //è¬ã®å®šæ•°ï¼ˆæ ¹æ‹ ç„¡ã—)
     double hoge = 0.8;
     for(int i = 0; i < p.size(); i++) {
         double bufx = p[i][0].x, bufy = p[i][0].y;
@@ -406,20 +447,20 @@ int bevel_and_emboss(lua_State *L) {
             double x = pi[j].x, y = pi[j].y;
             double xn = pi[s[0]].x, yn = pi[s[0]].y;
             double xnn = pi[s[1]].x, ynn = pi[s[1]].y;
-            //ŠOÏ‚ªè‡’lˆÈ‰ºi“¯ˆê’¼üã‚ÆŒ©˜ô‚¹‚éj‚È‚ç’†ŠÔ“_‚ğíœ
+            //å¤–ç©ãŒé–¾å€¤ä»¥ä¸‹ï¼ˆåŒä¸€ç›´ç·šä¸Šã¨è¦‹åšã›ã‚‹ï¼‰ãªã‚‰ä¸­é–“ç‚¹ã‚’å‰Šé™¤
             if(std::abs((x-xn)*(yn-ynn)-(y-yn)*(xn-xnn)) <= isline) {
-                // íœ—p‚Æ‚µ‚Äƒ}[ƒN
+                // å‰Šé™¤ç”¨ã¨ã—ã¦ãƒãƒ¼ã‚¯
                 pi[j + 1].x = HUGE_VAL;
             } else {
                 s[1] = s[0];
             }
             s[0] = j;
         }
-        // ƒ}[ƒN‚³‚ê‚½‚Ì‚ğíœ
+        // ãƒãƒ¼ã‚¯ã•ã‚ŒãŸã®ã‚’å‰Šé™¤
         std::erase_if(pi, [](const auto& pij) { return pij.x == HUGE_VAL; });
     }
 
-    //‚±‚±‚Ü‚Å‚Å•â³‚µ‚½—ÖŠsü‚ğg‚Á‚Ä—§‘Ì‰»‚ğì‚ê‚ÎA‘¤–Ê‚ª‚»‚±‚»‚±ŠŠ‚ç‚©‚È—§‘Ì‚ªo—ˆ‚é‚Æv‚¤
+    //ã“ã“ã¾ã§ã§è£œæ­£ã—ãŸè¼ªéƒ­ç·šã‚’ä½¿ã£ã¦ç«‹ä½“åŒ–ã‚’ä½œã‚Œã°ã€å´é¢ãŒãã“ãã“æ»‘ã‚‰ã‹ãªç«‹ä½“ãŒå‡ºæ¥ã‚‹ã¨æ€ã†
 
     for(int i = 0; i < p.size(); i++) {
         for(int j = 0; j < p[i].size(); j++) {
@@ -432,17 +473,17 @@ int bevel_and_emboss(lua_State *L) {
             for(int y = ymin; y <= ymax; y++) {
                 for(int x = xmin; x <= xmax; x++) {
                     double x_ul = x - 0.5, y_ul = y - 0.5;
-                    //ƒ|ƒCƒ“ƒ^“n‚µ
+                    //ãƒã‚¤ãƒ³ã‚¿æ¸¡ã—
                     Pixel_Info* info = &pix_info.get()[y*w+x];
-                    //[x0,y0]‚æ‚èŒü‚±‚¤‘¤‚É‚Â‚¢‚Ä‚ÍŒvZ‚Ì•K—v–³‚µiŸ‚Ìƒ‹[ƒv‚ÅŒvZ‚³‚ê‚éj
+                    //[x0,y0]ã‚ˆã‚Šå‘ã“ã†å´ã«ã¤ã„ã¦ã¯è¨ˆç®—ã®å¿…è¦ç„¡ã—ï¼ˆæ¬¡ã®ãƒ«ãƒ¼ãƒ—ã§è¨ˆç®—ã•ã‚Œã‚‹ï¼‰
                     if(dx * (x_ul - x0) > dy * (y0 - y_ul)) {
                         std::tuple<double, double, double> ret = distance_line(x_ul, y_ul, x0, y0, dx, dy);
-                        //”äŠr’iŠK‚Å‚Ímath.sqrt()‚ğg‚¤•K—v‚Í‚È‚¢
+                        //æ¯”è¼ƒæ®µéšã§ã¯math.sqrt()ã‚’ä½¿ã†å¿…è¦ã¯ãªã„
                         if(info->dis > std::get<0>(ret)) {
                             info->dis = std::get<0>(ret);
                             info->x = std::get<1>(ret);
                             info->y = std::get<2>(ret);
-                            //—ÖŠsü‚Ì“àŠO”»’èi^—’l‚Å•Û‚·‚é‚æ‚èŒ¸Z‚µ‚½•û‚ª‘¬‚©‚Á‚½A“–‘R‚©j
+                            //è¼ªéƒ­ç·šã®å†…å¤–åˆ¤å®šï¼ˆçœŸç†å€¤ã§ä¿æŒã™ã‚‹ã‚ˆã‚Šæ¸›ç®—ã—ãŸæ–¹ãŒé€Ÿã‹ã£ãŸã€å½“ç„¶ã‹ï¼‰
                             info->line = dy * (x_ul - x0) - dx * (y_ul - y0);
                         }
                     }
@@ -451,7 +492,7 @@ int bevel_and_emboss(lua_State *L) {
         }
     }
 
-    //‚¢‚­‚Â‚©‚Ì•Ï”‚ğg‚¢ˆÕ‚¢Œ`‚É•ÏŠ·
+    //ã„ãã¤ã‹ã®å¤‰æ•°ã‚’ä½¿ã„æ˜“ã„å½¢ã«å¤‰æ›
     for(int j = 0; j < h; j++) {
         for(int i = 0; i < w; i++) {
             Pixel_Info* info = &pix_info[j * w + i];
@@ -461,13 +502,13 @@ int bevel_and_emboss(lua_State *L) {
 
             // cos(atan2(y, x) + r)
             // = cos(atan2(y, x)) * cos(r) - sin(atan2(y, x)) * sin(r)
-            // (x, y)‚Íã‚Å³‹K‰»‚µ‚½‚Ì‚Å
+            // (x, y)ã¯ä¸Šã§æ­£è¦åŒ–ã—ãŸã®ã§
             // = x * cos(r) - y * sin(r)
             info->gray = (info->x * cos_rot - info->y * sin_rot) * high * (info->line < 0 ? -1 : 1);
         }
     }
 
-    //l‹÷‚ÌF‚©‚ç’†S‚ÌF‚ğ‹‚ß‚éƒAƒ“ƒ`ƒGƒCƒŠƒAƒXˆ—
+    //å››éš…ã®è‰²ã‹ã‚‰ä¸­å¿ƒã®è‰²ã‚’æ±‚ã‚ã‚‹ã‚¢ãƒ³ãƒã‚¨ã‚¤ãƒªã‚¢ã‚¹å‡¦ç†
     for(int j = 1; j < h - 1; j++) {
         for(int i = 1; i < w - 1; i++) {
             Pixel_Info* info7 = &pix_info[j * w + i];
@@ -478,106 +519,60 @@ int bevel_and_emboss(lua_State *L) {
             double p4 = info7->y == info1->y ? 0.5 : std::clamp((info1->dis - info7->dis + info1->y) / (info1->y - info7->y), 0.0, 1.0);
             double p6 = info9->y == info3->y ? 0.5 : std::clamp((info3->dis - info9->dis + info3->y) / (info3->y - info9->y), 0.0, 1.0);
             double p2 = info1->x == info3->x ? 0.5 : std::clamp((info3->dis - info1->dis + info3->x) / (info3->x - info1->x), 0.0, 1.0);
-            //4’¸“_‚Ì•½‹Ï’l‚È‚ç’áƒRƒXƒg
+            //4é ‚ç‚¹ã®å¹³å‡å€¤ãªã‚‰ä½ã‚³ã‚¹ãƒˆ
             double x = (p8 + p2 + 1) / 4, y = (p4 + p6 + 1) / 4;
             info7->gray = (info7->gray * (p8 * y + p4 * x) + info9->gray * ((1 - p8) * y + p6 * (1 - x)) + info1->gray * ((1 - p4) * x + p2 * (1 - y)) + info3->gray * ((1 - p6) * (1 - x) + (1 - p2) * (1 - y))) / 2;
-            //‚±‚Ì‚Ü‚Ü‚¾‚ÆƒsƒNƒZƒ‹¶ã‹÷‚ÌÀ•W‚ÅŒvZ‚³‚ê‚é‚Ì‚ÅAG‚É•â³‚·‚é
+            //ã“ã®ã¾ã¾ã ã¨ãƒ”ã‚¯ã‚»ãƒ«å·¦ä¸Šéš…ã®åº§æ¨™ã§è¨ˆç®—ã•ã‚Œã‚‹ã®ã§ã€é›‘ã«è£œæ­£ã™ã‚‹
             info7->dis = (info7->dis + info9->dis + info1->dis + info3->dis) / 4.0;
         }
     }
 
     switch(style) {
-        case 0: //ƒxƒxƒ‹(ŠO‘¤)
+        case 0: //ãƒ™ãƒ™ãƒ«(å¤–å´)
         {
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                pix[i].r = bgcol_r;
-                pix[i].g = bgcol_g;
-                pix[i].b = bgcol_b;
-                pix[i].a = 0xff;
-            }
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    pix[i].r = bgcol_r;
+                    pix[i].g = bgcol_g;
+                    pix[i].b = bgcol_b;
+                    pix[i].a = 0xff;
+                }
+            });
             utl_putpixeldata(L, pix);
             utl_copybuffer(L, "tmp", "obj");
             utl_drawtarget(L, "tempbuffer");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                pix[i].r = col1_r;
-                pix[i].g = col1_g;
-                pix[i].b = col1_b;
-                pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray));
-            }
-            utl_putpixeldata(L, pix);
-            utl_blur(L, blur);
-            utl_blend(L, ble1);
-            utl_draw(L, alp1);
-
-            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                pix[i].r = col2_r;
-                pix[i].g = col2_g;
-                pix[i].b = col2_b;
-                pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray));
-            }
-            utl_putpixeldata(L, pix);
-            utl_blur(L, blur);
-            utl_blend(L, ble2);
-            utl_draw(L, alp2);
-            utl_copybuffer(L, "obj", "tmp");
-
-            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                pix[i].r = static_cast<uint8_t>(bevel_buffer[i].r * (bevel_buffer[i].a / 255.0) + pix[i].r * (1.0 - bevel_buffer[i].a / 255.0));
-                pix[i].g = static_cast<uint8_t>(bevel_buffer[i].g * (bevel_buffer[i].a / 255.0) + pix[i].g * (1.0 - bevel_buffer[i].a / 255.0));
-                pix[i].b = static_cast<uint8_t>(bevel_buffer[i].b * (bevel_buffer[i].a / 255.0) + pix[i].b * (1.0 - bevel_buffer[i].a / 255.0));
-                pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255));
-            }
-            utl_putpixeldata(L, pix);
-            break;
-        }
-        case 1: //ƒxƒxƒ‹(“à‘¤)
-        {
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                pix[i].a = 0xff;
-            }
-            utl_putpixeldata(L, pix);
-            utl_copybuffer(L, "tmp", "obj");
-            utl_drawtarget(L, "tempbuffer");
-
-            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
                     pix[i].r = col1_r;
                     pix[i].g = col1_g;
                     pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray));
                 }
-            }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             utl_blend(L, ble1);
             utl_draw(L, alp1);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
                     pix[i].r = col2_r;
                     pix[i].g = col2_g;
                     pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray));
                 }
-            }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             utl_blend(L, ble2);
@@ -585,119 +580,154 @@ int bevel_and_emboss(lua_State *L) {
             utl_copybuffer(L, "obj", "tmp");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                pix[i].a = bevel_buffer[i].a;
-            }
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    pix[i].r = static_cast<uint8_t>(bevel_buffer[i].r * (bevel_buffer[i].a / 255.0) + pix[i].r * (1.0 - bevel_buffer[i].a / 255.0));
+                    pix[i].g = static_cast<uint8_t>(bevel_buffer[i].g * (bevel_buffer[i].a / 255.0) + pix[i].g * (1.0 - bevel_buffer[i].a / 255.0));
+                    pix[i].b = static_cast<uint8_t>(bevel_buffer[i].b * (bevel_buffer[i].a / 255.0) + pix[i].b * (1.0 - bevel_buffer[i].a / 255.0));
+                    pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255));
+                }
+            });
+            utl_putpixeldata(L, pix);
+            break;
+        }
+        case 1: //ãƒ™ãƒ™ãƒ«(å†…å´)
+        {
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    pix[i].a = 0xff;
+                }
+            });
+            utl_putpixeldata(L, pix);
+            utl_copybuffer(L, "tmp", "obj");
+            utl_drawtarget(L, "tempbuffer");
+
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col1_r;
+                        pix[i].g = col1_g;
+                        pix[i].b = col1_b;
+                        pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
+                }
+            });
+            utl_putpixeldata(L, pix);
+            utl_blur(L, blur);
+            utl_blend(L, ble1);
+            utl_draw(L, alp1);
+
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col2_r;
+                        pix[i].g = col2_g;
+                        pix[i].b = col2_b;
+                        pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
+                }
+            });
+
+            utl_putpixeldata(L, pix);
+            utl_blur(L, blur);
+            utl_blend(L, ble2);
+            utl_draw(L, alp2);
+            utl_copybuffer(L, "obj", "tmp");
+
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
+            multi_thread([&](int thread_id, int thread_num) {
+                    size_t start = size * thread_id / thread_num;
+                    size_t end = size * (thread_id + 1) / thread_num;
+                    for (int i = start; i < end; i++) {
+                        pix[i].a = bevel_buffer[i].a;
+                    }
+                });
             
             utl_putpixeldata(L, pix);
             break;
         }
-        case 2: //ƒGƒ“ƒ{ƒX
+        case 2: //ã‚¨ãƒ³ãƒœã‚¹
         {
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                pix[i].r = static_cast<uint8_t>(pix[i].r * (pix[i].a / 255.0) + bgcol_r * (1 - pix[i].a / 255.0));
-                pix[i].g = static_cast<uint8_t>(pix[i].g * (pix[i].a / 255.0) + bgcol_g * (1 - pix[i].a / 255.0));
-                pix[i].b = static_cast<uint8_t>(pix[i].b * (pix[i].a / 255.0) + bgcol_b * (1 - pix[i].a / 255.0));
-                pix[i].a = 0xff;
-            }
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    pix[i].r = static_cast<uint8_t>(pix[i].r * (pix[i].a / 255.0) + bgcol_r * (1 - pix[i].a / 255.0));
+                    pix[i].g = static_cast<uint8_t>(pix[i].g * (pix[i].a / 255.0) + bgcol_g * (1 - pix[i].a / 255.0));
+                    pix[i].b = static_cast<uint8_t>(pix[i].b * (pix[i].a / 255.0) + bgcol_b * (1 - pix[i].a / 255.0));
+                    pix[i].a = 0xff;
+                }
+            });
             utl_putpixeldata(L, pix);
             utl_copybuffer(L, "tmp", "obj");
             utl_drawtarget(L, "tempbuffer");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col1_r;
-                    pix[i].g = col1_g;
-                    pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0)));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
-                }
-            }
-            utl_putpixeldata(L, pix);
-            utl_blur(L, blur);
-            utl_blend(L, ble1);
-            utl_draw(L, alp1);
-
-            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col2_r;
-                    pix[i].g = col2_g;
-                    pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0)));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
-                }
-            }
-            utl_putpixeldata(L, pix);
-            utl_blur(L, blur);
-            utl_blend(L, ble2);
-            utl_draw(L, alp2);
-            utl_copybuffer(L, "obj", "tmp");
-
-            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255.0));
-            }
             
-            utl_putpixeldata(L, pix);
-            break;
-        }
-        case 3: //ƒsƒ[ƒGƒ“ƒ{ƒX
-        {
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                pix[i].r = static_cast<uint8_t>(pix[i].r * (pix[i].a / 255.0) + bgcol_r * (1 - pix[i].a / 255.0));
-                pix[i].g = static_cast<uint8_t>(pix[i].g * (pix[i].a / 255.0) + bgcol_g * (1 - pix[i].a / 255.0));
-                pix[i].b = static_cast<uint8_t>(pix[i].b * (pix[i].a / 255.0) + bgcol_b * (1 - pix[i].a / 255.0));
-                pix[i].a = 0xff;
-            }
-            utl_putpixeldata(L, pix);
-            utl_copybuffer(L, "tmp", "obj");
-            utl_drawtarget(L, "tempbuffer");
-
-            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col1_r;
-                    pix[i].g = col1_g;
-                    pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2.0 / 255.0 - 1.0) * pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0)));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col1_r;
+                        pix[i].g = col1_g;
+                        pix[i].b = col1_b;
+                        pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0)));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
                 }
-            }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             utl_blend(L, ble1);
             utl_draw(L, alp1);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col2_r;
-                    pix[i].g = col2_g;
-                    pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -(bevel_buffer[i].a * 2.0 / 255.0 - 1.0) * pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0)));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col2_r;
+                        pix[i].g = col2_g;
+                        pix[i].b = col2_b;
+                        pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0)));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
                 }
-            }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             utl_blend(L, ble2);
@@ -705,15 +735,99 @@ int bevel_and_emboss(lua_State *L) {
             utl_copybuffer(L, "obj", "tmp");
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255.0));
-            }
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255.0));
+                }
+            });
+            utl_putpixeldata(L, pix);
+            break;
+        }
+        case 3: //ãƒ”ãƒ­ãƒ¼ã‚¨ãƒ³ãƒœã‚¹
+        {
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    pix[i].r = static_cast<uint8_t>(pix[i].r * (pix[i].a / 255.0) + bgcol_r * (1 - pix[i].a / 255.0));
+                    pix[i].g = static_cast<uint8_t>(pix[i].g * (pix[i].a / 255.0) + bgcol_g * (1 - pix[i].a / 255.0));
+                    pix[i].b = static_cast<uint8_t>(pix[i].b * (pix[i].a / 255.0) + bgcol_b * (1 - pix[i].a / 255.0));
+                    pix[i].a = 0xff;
+                }
+            });
+            utl_putpixeldata(L, pix);
+            utl_copybuffer(L, "tmp", "obj");
+            utl_drawtarget(L, "tempbuffer");
+
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col1_r;
+                        pix[i].g = col1_g;
+                        pix[i].b = col1_b;
+                        pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2.0 / 255.0 - 1.0) * pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0)));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
+                }
+            });
+            utl_putpixeldata(L, pix);
+            utl_blur(L, blur);
+            utl_blend(L, ble1);
+            utl_draw(L, alp1);
+
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col2_r;
+                        pix[i].g = col2_g;
+                        pix[i].b = col2_b;
+                        pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -(bevel_buffer[i].a * 2.0 / 255.0 - 1.0) * pix_info[i].gray) * (pix_info[i].line < 0 ? 1 : std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0)));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
+                }
+            });
+            utl_putpixeldata(L, pix);
+            utl_blur(L, blur);
+            utl_blend(L, ble2);
+            utl_draw(L, alp2);
+            utl_copybuffer(L, "obj", "tmp");
+
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    pix[i].a = std::max(bevel_buffer[i].a, static_cast<uint8_t>(std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0) * 255.0));
+                }
+            });
 
             utl_putpixeldata(L, pix);
 
             break;
         }
-        case 4: //ƒxƒxƒ‹(ŠO‘¤)’¼Ú•`‰æ
+        case 4: //ãƒ™ãƒ™ãƒ«(å¤–å´)ç›´æ¥æç”»
         {
             utl_drawtarget(L, "framebuffer");
 
@@ -723,7 +837,7 @@ int bevel_and_emboss(lua_State *L) {
             lua_getfield(L, -1, "draw");
             lua_call(L, 0, 0);
 
-            //obj.effect()‚Å‰ğ‘œ“x‚ª•Ï‚í‚é‰Â”\«‚ª‚ ‚é‚Ì‚ÅÄ“Ç‚İ‚İ
+            //obj.effect()ã§è§£åƒåº¦ãŒå¤‰ã‚ã‚‹å¯èƒ½æ€§ãŒã‚ã‚‹ã®ã§å†èª­ã¿è¾¼ã¿
             utl_temptarget(L, w, h);
             utl_copybuffer(L, "obj", "tmp");
             utl_drawtarget(L, "framebuffer");
@@ -731,155 +845,24 @@ int bevel_and_emboss(lua_State *L) {
             setObjField(L, obj);
 
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col1_r;
-                    pix[i].g = col1_g;
-                    pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(std::min(255.0 - bevel_buffer[i].a, 255.0 * std::max(0.0, pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis)));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
-                }
-            }
-            utl_putpixeldata(L, pix);
-            utl_blur(L, blur);
-            utl_blend(L, ble1);
-
-            lua_getfield(L, -1, "effect");
-            lua_call(L, 0, 0);
-
-            utl_draw(L, alp1);
-            utl_temptarget(L, w, h);
-            utl_copybuffer(L, "obj", "tmp");
-            utl_drawtarget(L, "framebuffer");
-
-            setObjField(L, obj);
-
-            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col2_r;
-                    pix[i].g = col2_g;
-                    pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(std::min(255.0 - bevel_buffer[i].a, 255.0 * std::max(0.0, -pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis)));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
-                }
-            }
-            utl_putpixeldata(L, pix);
-            utl_blur(L, blur);
-            utl_blend(L, ble2);
-
-            lua_getfield(L, -1, "effect");
-            lua_call(L, 0, 0);
-
-            utl_draw(L, alp2);
-            break;
-        }
-        case 5: //ƒxƒxƒ‹(“à‘¤)’¼Ú•`‰æ
-        {
-            utl_drawtarget(L, "framebuffer");
-
-            lua_getfield(L, -1, "effect");
-            lua_call(L, 0, 0);
-            ObjField obj = getObjField(L);
-            lua_getfield(L, -1, "draw");
-            lua_call(L, 0, 0);
-
-            utl_temptarget(L, w, h);
-            utl_copybuffer(L, "obj", "tmp");
-            utl_drawtarget(L, "framebuffer");
-
-            setObjField(L, obj);
-
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col1_r;
-                    pix[i].g = col1_g;
-                    pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(std::min(static_cast<double>(bevel_buffer[i].a), 255.0 * std::max(0.0, pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis)));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
-                }
-            }
-            utl_putpixeldata(L, pix);
-            utl_blur(L, blur);
-            utl_blend(L, ble1);
-
-            lua_getfield(L, -1, "effect");
-            lua_call(L, 0, 0);
-
-            utl_draw(L, alp1);
-            utl_temptarget(L, w, h);
-            utl_copybuffer(L, "obj", "tmp");
-            utl_drawtarget(L, "framebuffer");
-
-            setObjField(L, obj);
-
-            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col2_r;
-                    pix[i].g = col2_g;
-                    pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(std::min(static_cast<double>(bevel_buffer[i].a), 255.0 * std::max(0.0, -pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis)));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
-                }
-            }
-            utl_putpixeldata(L, pix);
-            utl_blur(L, blur);
-            utl_blend(L, ble2);
-
-            lua_getfield(L, -1, "effect");
-            lua_call(L, 0, 0);
             
-            utl_draw(L, alp2);
-            break;
-        }
-        case 6: //ƒGƒ“ƒ{ƒX ’¼Ú•`‰æ
-        {
-            utl_drawtarget(L, "framebuffer");
-
-            lua_getfield(L, -1, "effect");
-            lua_call(L, 0, 0);
-            ObjField obj = getObjField(L);
-            lua_getfield(L, -1, "draw");
-            lua_call(L, 0, 0);
-
-            utl_temptarget(L, w, h);
-            utl_copybuffer(L, "obj", "tmp");
-            utl_drawtarget(L, "framebuffer");
-
-            setObjField(L, obj);
-
-            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col1_r;
-                    pix[i].g = col1_g;
-                    pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col1_r;
+                        pix[i].g = col1_g;
+                        pix[i].b = col1_b;
+                        pix[i].a = static_cast<uint8_t>(std::min(255.0 - bevel_buffer[i].a, 255.0 * std::max(0.0, pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis)));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
                 }
-            }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             utl_blend(L, ble1);
@@ -895,19 +878,24 @@ int bevel_and_emboss(lua_State *L) {
             setObjField(L, obj);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col2_r;
-                    pix[i].g = col2_g;
-                    pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col2_r;
+                        pix[i].g = col2_g;
+                        pix[i].b = col2_b;
+                        pix[i].a = static_cast<uint8_t>(std::min(255.0 - bevel_buffer[i].a, 255.0 * std::max(0.0, -pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis)));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
                 }
-            }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             utl_blend(L, ble2);
@@ -918,7 +906,7 @@ int bevel_and_emboss(lua_State *L) {
             utl_draw(L, alp2);
             break;
         }
-        case 7: //ƒsƒ[ƒGƒ“ƒ{ƒX ’¼Ú•`‰æ
+        case 5: //ãƒ™ãƒ™ãƒ«(å†…å´)ç›´æ¥æç”»
         {
             utl_drawtarget(L, "framebuffer");
 
@@ -935,19 +923,180 @@ int bevel_and_emboss(lua_State *L) {
             setObjField(L, obj);
 
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col1_r;
-                    pix[i].g = col1_g;
-                    pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col1_r;
+                        pix[i].g = col1_g;
+                        pix[i].b = col1_b;
+                        pix[i].a = static_cast<uint8_t>(std::min(static_cast<double>(bevel_buffer[i].a), 255.0 * std::max(0.0, pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis)));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
                 }
-            }
+            });
+            utl_putpixeldata(L, pix);
+            utl_blur(L, blur);
+            utl_blend(L, ble1);
+
+            lua_getfield(L, -1, "effect");
+            lua_call(L, 0, 0);
+
+            utl_draw(L, alp1);
+            utl_temptarget(L, w, h);
+            utl_copybuffer(L, "obj", "tmp");
+            utl_drawtarget(L, "framebuffer");
+
+            setObjField(L, obj);
+
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col2_r;
+                        pix[i].g = col2_g;
+                        pix[i].b = col2_b;
+                        pix[i].a = static_cast<uint8_t>(std::min(static_cast<double>(bevel_buffer[i].a), 255.0 * std::max(0.0, -pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis)));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
+                }
+            });
+            utl_putpixeldata(L, pix);
+            utl_blur(L, blur);
+            utl_blend(L, ble2);
+
+            lua_getfield(L, -1, "effect");
+            lua_call(L, 0, 0);
+            
+            utl_draw(L, alp2);
+            break;
+        }
+        case 6: //ã‚¨ãƒ³ãƒœã‚¹ ç›´æ¥æç”»
+        {
+            utl_drawtarget(L, "framebuffer");
+
+            lua_getfield(L, -1, "effect");
+            lua_call(L, 0, 0);
+            ObjField obj = getObjField(L);
+            lua_getfield(L, -1, "draw");
+            lua_call(L, 0, 0);
+
+            utl_temptarget(L, w, h);
+            utl_copybuffer(L, "obj", "tmp");
+            utl_drawtarget(L, "framebuffer");
+
+            setObjField(L, obj);
+
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col1_r;
+                        pix[i].g = col1_g;
+                        pix[i].b = col1_b;
+                        pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
+                }
+            });
+            utl_putpixeldata(L, pix);
+            utl_blur(L, blur);
+            utl_blend(L, ble1);
+
+            lua_getfield(L, -1, "effect");
+            lua_call(L, 0, 0);
+
+            utl_draw(L, alp1);
+            utl_temptarget(L, w, h);
+            utl_copybuffer(L, "obj", "tmp");
+            utl_drawtarget(L, "framebuffer");
+
+            setObjField(L, obj);
+
+            pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col2_r;
+                        pix[i].g = col2_g;
+                        pix[i].b = col2_b;
+                        pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
+                }
+            });
+            utl_putpixeldata(L, pix);
+            utl_blur(L, blur);
+            utl_blend(L, ble2);
+
+            lua_getfield(L, -1, "effect");
+            lua_call(L, 0, 0);
+
+            utl_draw(L, alp2);
+            break;
+        }
+        case 7: //ãƒ”ãƒ­ãƒ¼ã‚¨ãƒ³ãƒœã‚¹ ç›´æ¥æç”»
+        {
+            utl_drawtarget(L, "framebuffer");
+
+            lua_getfield(L, -1, "effect");
+            lua_call(L, 0, 0);
+            ObjField obj = getObjField(L);
+            lua_getfield(L, -1, "draw");
+            lua_call(L, 0, 0);
+
+            utl_temptarget(L, w, h);
+            utl_copybuffer(L, "obj", "tmp");
+            utl_drawtarget(L, "framebuffer");
+
+            setObjField(L, obj);
+
+            Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col1_r;
+                        pix[i].g = col1_g;
+                        pix[i].b = col1_b;
+                        pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
+                }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             utl_blend(L, ble1);
@@ -963,19 +1112,24 @@ int bevel_and_emboss(lua_State *L) {
             setObjField(L, obj);
 
             pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col2_r;
-                    pix[i].g = col2_g;
-                    pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * (-pix_info[i].gray)) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col2_r;
+                        pix[i].g = col2_g;
+                        pix[i].b = col2_b;
+                        pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * (-pix_info[i].gray)) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
                 }
-            }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             utl_blend(L, ble2);
@@ -986,162 +1140,198 @@ int bevel_and_emboss(lua_State *L) {
             utl_draw(L, alp2);
             break;
         }
-        case 8: //ƒxƒxƒ‹(ŠO‘¤) ƒnƒCƒ‰ƒCƒg‚Ì‚İ
+        case 8: //ãƒ™ãƒ™ãƒ«(å¤–å´) ãƒã‚¤ãƒ©ã‚¤ãƒˆã®ã¿
         {
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col1_r;
-                    pix[i].g = col1_g;
-                    pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(std::min(255.0 - bevel_buffer[i].a, 255.0 * std::max(0.0, pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis)));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col1_r;
+                        pix[i].g = col1_g;
+                        pix[i].b = col1_b;
+                        pix[i].a = static_cast<uint8_t>(std::min(255.0 - bevel_buffer[i].a, 255.0 * std::max(0.0, pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis)));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
                 }
-            }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             break;
         }
-        case 9: //ƒxƒxƒ‹(“à‘¤) ƒnƒCƒ‰ƒCƒg‚Ì‚İ
+        case 9: //ãƒ™ãƒ™ãƒ«(å†…å´) ãƒã‚¤ãƒ©ã‚¤ãƒˆã®ã¿
         {
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col1_r;
-                    pix[i].g = col1_g;
-                    pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(std::min(static_cast<double>(bevel_buffer[i].a), 255.0 * std::max(0.0, pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis)));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col1_r;
+                        pix[i].g = col1_g;
+                        pix[i].b = col1_b;
+                        pix[i].a = static_cast<uint8_t>(std::min(static_cast<double>(bevel_buffer[i].a), 255.0 * std::max(0.0, pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis)));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
                 }
-            }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             break;
         }
-        case 10: //ƒGƒ“ƒ{ƒX ƒnƒCƒ‰ƒCƒg‚Ì‚İ
+        case 10: //ã‚¨ãƒ³ãƒœã‚¹ ãƒã‚¤ãƒ©ã‚¤ãƒˆã®ã¿
         {
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col1_r;
-                    pix[i].g = col1_g;
-                    pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col1_r;
+                        pix[i].g = col1_g;
+                        pix[i].b = col1_b;
+                        pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
                 }
-            }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             break;
         }
-        case 11: //ƒsƒ[ƒGƒ“ƒ{ƒX ƒnƒCƒ‰ƒCƒg‚Ì‚İ
+        case 11: //ãƒ”ãƒ­ãƒ¼ã‚¨ãƒ³ãƒœã‚¹ ãƒã‚¤ãƒ©ã‚¤ãƒˆã®ã¿
         {
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col1_r;
-                    pix[i].g = col1_g;
-                    pix[i].b = col1_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col1_r;
+                        pix[i].g = col1_g;
+                        pix[i].b = col1_b;
+                        pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
                 }
-            }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             break;
         }
-        case 12: //ƒxƒxƒ‹(ŠO‘¤) ƒVƒƒƒhƒE‚Ì‚İ
+        case 12: //ãƒ™ãƒ™ãƒ«(å¤–å´) ã‚·ãƒ£ãƒ‰ã‚¦ã®ã¿
         {
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col2_r;
-                    pix[i].g = col2_g;
-                    pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(std::min(255.0 - bevel_buffer[i].a, 255.0 * std::max(0.0, -pix_info[i].gray) * std::min(1.0, bev_w-pix_info[i].dis)));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+            
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col2_r;
+                        pix[i].g = col2_g;
+                        pix[i].b = col2_b;
+                        pix[i].a = static_cast<uint8_t>(std::min(255.0 - bevel_buffer[i].a, 255.0 * std::max(0.0, -pix_info[i].gray) * std::min(1.0, bev_w-pix_info[i].dis)));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
                 }
-            }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             break;
         }
-        case 13: //ƒxƒxƒ‹(“à‘¤) ƒVƒƒƒhƒE‚Ì‚İ
+        case 13: //ãƒ™ãƒ™ãƒ«(å†…å´) ã‚·ãƒ£ãƒ‰ã‚¦ã®ã¿
         {
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col2_r;
-                    pix[i].g = col2_g;
-                    pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(std::min(static_cast<double>(bevel_buffer[i].a), 255.0 * std::max(0.0, -pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis)));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col2_r;
+                        pix[i].g = col2_g;
+                        pix[i].b = col2_b;
+                        pix[i].a = static_cast<uint8_t>(std::min(static_cast<double>(bevel_buffer[i].a), 255.0 * std::max(0.0, -pix_info[i].gray) * std::min(1.0, bev_w - pix_info[i].dis)));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
                 }
-            }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             break;
         }
-        case 14: //ƒGƒ“ƒ{ƒX ƒVƒƒƒhƒE‚Ì‚İ
+        case 14: //ã‚¨ãƒ³ãƒœã‚¹ ã‚·ãƒ£ãƒ‰ã‚¦ã®ã¿
         {
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col2_r;
-                    pix[i].g = col2_g;
-                    pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col2_r;
+                        pix[i].g = col2_g;
+                        pix[i].b = col2_b;
+                        pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, -pix_info[i].gray) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
                 }
-            }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             break;
         }
-        case 15: //ƒsƒ[ƒGƒ“ƒ{ƒX ƒVƒƒƒhƒE‚Ì‚İ
+        case 15: //ãƒ”ãƒ­ãƒ¼ã‚¨ãƒ³ãƒœã‚¹ ã‚·ãƒ£ãƒ‰ã‚¦ã®ã¿
         {
             Pixel_BGRA* pix = reinterpret_cast<Pixel_BGRA*>(utl_getpixeldata(L));
-            for(int i = 0; i < w * h; i++) {
-                if(pix_info[i].dis <= bev_w) {
-                    pix[i].r = col2_r;
-                    pix[i].g = col2_g;
-                    pix[i].b = col2_b;
-                    pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * (-pix_info[i].gray)) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
-                } else {
-                    pix[i].r = 0;
-                    pix[i].g = 0;
-                    pix[i].b = 0;
-                    pix[i].a = 0;
+            multi_thread([&](int thread_id, int thread_num) {
+                size_t start = size * thread_id / thread_num;
+                size_t end = size * (thread_id + 1) / thread_num;
+                for(int i = start; i < end; i++) {
+                    if(pix_info[i].dis <= bev_w) {
+                        pix[i].r = col2_r;
+                        pix[i].g = col2_g;
+                        pix[i].b = col2_b;
+                        pix[i].a = static_cast<uint8_t>(255.0 * std::max(0.0, (bevel_buffer[i].a * 2 / 255.0 - 1) * (-pix_info[i].gray)) * std::clamp(bev_w - pix_info[i].dis, 0.0, 1.0));
+                    } else {
+                        pix[i].r = 0;
+                        pix[i].g = 0;
+                        pix[i].b = 0;
+                        pix[i].a = 0;
+                    }
                 }
-            }
+            });
             utl_putpixeldata(L, pix);
             utl_blur(L, blur);
             break;
