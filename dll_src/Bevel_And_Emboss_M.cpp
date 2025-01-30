@@ -476,7 +476,7 @@ int bevel_and_emboss(lua_State *L) {
                 for(int x = xmin; x <= xmax; x++) {
                     double x_ul = x - 0.5, y_ul = y - 0.5;
                     //ポインタ渡し
-                    Pixel_Info* info = &pix_info.get()[y*w+x];
+                    Pixel_Info* info = &pix_info[y*w+x];
                     //[x0,y0]より向こう側については計算の必要無し（次のループで計算される）
                     if(dx * (x_ul - x0) > dy * (y0 - y_ul)) {
                         std::tuple<double, double, double> ret = distance_line(x_ul, y_ul, x0, y0, dx, dy);
