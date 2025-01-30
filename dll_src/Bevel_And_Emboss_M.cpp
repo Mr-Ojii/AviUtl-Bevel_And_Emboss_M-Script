@@ -7,6 +7,8 @@
 #include <memory>
 #include <vector>
 #include <cmath>
+#include <chrono>
+#include <iostream>
 #include <windows.h>
 #include "lua.hpp"
 
@@ -396,19 +398,27 @@ int bevel_and_emboss(lua_State *L) {
             bufy = y0;
         }
     }
-
+    
     for(int i = 0; i < p.size(); i++) {
-        for(int j = p[i].size() - 3; j >= 0; j--) {
-            double x = p[i][j].x, y = p[i][j].y;
-            double xn = p[i][j+1].x, yn = p[i][j+1].y;
-            double xnn = p[i][j+2].x, ynn = p[i][j+2].y;
+        auto& pi = p[i];
+        size_t s[2] = {pi.size() - 2, pi.size() - 1};
+        for(int j = pi.size() - 3; j >= 0; j--) {
+            double x = pi[j].x, y = pi[j].y;
+            double xn = pi[s[0]].x, yn = pi[s[0]].y;
+            double xnn = pi[s[1]].x, ynn = pi[s[1]].y;
             //外積が閾値以下（同一直線上と見做せる）なら中間点を削除
             if(std::abs((x-xn)*(yn-ynn)-(y-yn)*(xn-xnn)) <= isline) {
-                //vector.eraseは割と重いけど致し方なし
-                p[i].erase(p[i].begin() + j + 1);
+                // 削除用としてマーク
+                pi[j + 1].x = HUGE_VAL;
+            } else {
+                s[1] = s[0];
             }
+            s[0] = j;
         }
+        // マークされたのを削除
+        std::erase_if(pi, [](const auto& pij) { return pij.x == HUGE_VAL; });
     }
+
     //ここまでで補正した輪郭線を使って立体化を作れば、側面がそこそこ滑らかな立体が出来ると思う
 
     for(int i = 0; i < p.size(); i++) {
