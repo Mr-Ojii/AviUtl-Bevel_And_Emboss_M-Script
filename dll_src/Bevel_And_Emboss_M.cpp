@@ -9,6 +9,7 @@
 #include <cmath>
 #include <chrono>
 #include <iostream>
+#include <optional>
 #include <functional>
 #include <windows.h>
 #include "lua.hpp"
@@ -336,61 +337,62 @@ int bevel_and_emboss(lua_State *L) {
     while(1)
     {
         std::vector<Point> pb;
-        Point tmp_point = {-1, -1};
-        for(; border_i < size; border_i++) {
-            if(border_ans[border_i]) {
-                tmp_point.x = border_i % w;
-                tmp_point.y = border_i / w;
-                break;
+        auto tmp_point = [&]() -> std::optional<Point> {
+            for(; border_i < size; border_i++) {
+                if(border_ans[border_i]) {
+                    return Point {static_cast<double>(border_i % w), static_cast<double>(border_i / w)};
+                }
             }
-        }
-        if(tmp_point.x == -1 || tmp_point.y == -1)
+            return std::nullopt;
+        }();
+
+        if(!tmp_point)
             break;
 
         //外側判定
-        bool ccw = (tmp_point.y == 0 || (pixel[static_cast<int>((tmp_point.y - 1) * w + tmp_point.x)].a <= a_th));
+        bool ccw = (tmp_point->y == 0 || (pixel[static_cast<int>((tmp_point->y - 1) * w + tmp_point->x)].a <= a_th));
 
         while(true) {
-            pb.push_back(tmp_point);
-            border_ans[tmp_point.y * w + tmp_point.x] = false;
+            border_ans[tmp_point->y * w + tmp_point->x] = false;
+            pb.push_back(std::move(*tmp_point));
             Point next_point = {-1, -1};
 
             if(ccw) {
                 //反時計回り 左から反時計回りで探索
-                if(tmp_point.x != 0 && border_ans[tmp_point.y * w + tmp_point.x - 1])
-                    next_point = {tmp_point.x - 1, tmp_point.y};
-                else if(tmp_point.y != h - 1 && tmp_point.x != 0 &&  border_ans[(tmp_point.y + 1) * w + tmp_point.x - 1])
-                    next_point = {tmp_point.x - 1, tmp_point.y + 1};
-                else if(tmp_point.y != h - 1 && border_ans[(tmp_point.y + 1) * w + tmp_point.x])
-                    next_point = {tmp_point.x, tmp_point.y + 1};
-                else if(tmp_point.y != h - 1 && tmp_point.x != w - 1 && border_ans[(tmp_point.y + 1) * w + tmp_point.x + 1])
-                    next_point = {tmp_point.x + 1, tmp_point.y + 1};
-                else if(tmp_point.x != w - 1 && border_ans[tmp_point.y * w + tmp_point.x + 1])
-                    next_point = {tmp_point.x + 1, tmp_point.y};
-                else if(tmp_point.y != 0 && tmp_point.x != w - 1 && border_ans[(tmp_point.y - 1) * w + tmp_point.x + 1])
-                    next_point = {tmp_point.x + 1, tmp_point.y - 1};
-                else if(tmp_point.y != 0 && border_ans[(tmp_point.y - 1) * w + tmp_point.x] == 1)
-                    next_point = {tmp_point.x, tmp_point.y - 1};
-                else if(tmp_point.y != 0 && tmp_point.x != 0 &&  border_ans[(tmp_point.y - 1) * w + tmp_point.x - 1])
-                    next_point = {tmp_point.x - 1, tmp_point.y - 1};
+                if(tmp_point->x != 0 && border_ans[tmp_point->y * w + tmp_point->x - 1])
+                    next_point = {tmp_point->x - 1, tmp_point->y};
+                else if(tmp_point->y != h - 1 && tmp_point->x != 0 &&  border_ans[(tmp_point->y + 1) * w + tmp_point->x - 1])
+                    next_point = {tmp_point->x - 1, tmp_point->y + 1};
+                else if(tmp_point->y != h - 1 && border_ans[(tmp_point->y + 1) * w + tmp_point->x])
+                    next_point = {tmp_point->x, tmp_point->y + 1};
+                else if(tmp_point->y != h - 1 && tmp_point->x != w - 1 && border_ans[(tmp_point->y + 1) * w + tmp_point->x + 1])
+                    next_point = {tmp_point->x + 1, tmp_point->y + 1};
+                else if(tmp_point->x != w - 1 && border_ans[tmp_point->y * w + tmp_point->x + 1])
+                    next_point = {tmp_point->x + 1, tmp_point->y};
+                else if(tmp_point->y != 0 && tmp_point->x != w - 1 && border_ans[(tmp_point->y - 1) * w + tmp_point->x + 1])
+                    next_point = {tmp_point->x + 1, tmp_point->y - 1};
+                else if(tmp_point->y != 0 && border_ans[(tmp_point->y - 1) * w + tmp_point->x] == 1)
+                    next_point = {tmp_point->x, tmp_point->y - 1};
+                else if(tmp_point->y != 0 && tmp_point->x != 0 &&  border_ans[(tmp_point->y - 1) * w + tmp_point->x - 1])
+                    next_point = {tmp_point->x - 1, tmp_point->y - 1};
             } else {
                 //時計回り 右から時計回りで探索
-                if(tmp_point.x != w - 1 && border_ans[tmp_point.y * w + tmp_point.x + 1])
-                    next_point = {tmp_point.x + 1, tmp_point.y};
-                else if(tmp_point.y != h - 1 && tmp_point.x != w - 1 && border_ans[(tmp_point.y + 1) * w + tmp_point.x + 1])
-                    next_point = {tmp_point.x + 1, tmp_point.y + 1};
-                else if(tmp_point.y != h - 1 && border_ans[(tmp_point.y + 1) * w + tmp_point.x])
-                    next_point = {tmp_point.x, tmp_point.y + 1};
-                else if(tmp_point.y != h - 1 && tmp_point.x != 0 &&  border_ans[(tmp_point.y + 1) * w + tmp_point.x - 1])
-                    next_point = {tmp_point.x - 1, tmp_point.y + 1};
-                else if(tmp_point.x != 0 && border_ans[tmp_point.y * w + tmp_point.x - 1])
-                    next_point = {tmp_point.x - 1, tmp_point.y};
-                else if(tmp_point.y != 0 && tmp_point.x != 0 &&  border_ans[(tmp_point.y - 1) * w + tmp_point.x - 1])
-                    next_point = {tmp_point.x - 1, tmp_point.y - 1};
-                else if(tmp_point.y != 0 && border_ans[(tmp_point.y - 1) * w + tmp_point.x])
-                    next_point = {tmp_point.x, tmp_point.y - 1};
-                else if(tmp_point.y != 0 && tmp_point.x != w - 1 && border_ans[(tmp_point.y - 1) * w + tmp_point.x + 1])
-                    next_point = {tmp_point.x + 1, tmp_point.y - 1};
+                if(tmp_point->x != w - 1 && border_ans[tmp_point->y * w + tmp_point->x + 1])
+                    next_point = {tmp_point->x + 1, tmp_point->y};
+                else if(tmp_point->y != h - 1 && tmp_point->x != w - 1 && border_ans[(tmp_point->y + 1) * w + tmp_point->x + 1])
+                    next_point = {tmp_point->x + 1, tmp_point->y + 1};
+                else if(tmp_point->y != h - 1 && border_ans[(tmp_point->y + 1) * w + tmp_point->x])
+                    next_point = {tmp_point->x, tmp_point->y + 1};
+                else if(tmp_point->y != h - 1 && tmp_point->x != 0 &&  border_ans[(tmp_point->y + 1) * w + tmp_point->x - 1])
+                    next_point = {tmp_point->x - 1, tmp_point->y + 1};
+                else if(tmp_point->x != 0 && border_ans[tmp_point->y * w + tmp_point->x - 1])
+                    next_point = {tmp_point->x - 1, tmp_point->y};
+                else if(tmp_point->y != 0 && tmp_point->x != 0 &&  border_ans[(tmp_point->y - 1) * w + tmp_point->x - 1])
+                    next_point = {tmp_point->x - 1, tmp_point->y - 1};
+                else if(tmp_point->y != 0 && border_ans[(tmp_point->y - 1) * w + tmp_point->x])
+                    next_point = {tmp_point->x, tmp_point->y - 1};
+                else if(tmp_point->y != 0 && tmp_point->x != w - 1 && border_ans[(tmp_point->y - 1) * w + tmp_point->x + 1])
+                    next_point = {tmp_point->x + 1, tmp_point->y - 1};
             }
 
             if(next_point.x == -1 || next_point.y == -1)
