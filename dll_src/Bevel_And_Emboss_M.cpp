@@ -113,7 +113,7 @@ inline void setObjField(lua_State* L, ObjField obj) {
 }
 
 inline double rad(double deg) {
-    return deg * 3.1415926535897932384626433832795028841971 / 180.0;
+    return deg * (3.1415926535897932384626433832795028841971 / 180.0);
 }
 
 inline double squared(double num) {
