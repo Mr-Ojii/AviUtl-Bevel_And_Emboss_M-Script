@@ -303,7 +303,8 @@ int bevel_and_emboss(lua_State *L) {
     if(size == 0)
         return 0;
 
-    std::unique_ptr<Pixel_BGRA[]> bevel_buffer = std::make_unique_for_overwrite<Pixel_BGRA[]>(size);
+    // putpixeldata にてSIMD処理による範囲外アクセスが発生する場合があるため、 +8
+    std::unique_ptr<Pixel_BGRA[]> bevel_buffer = std::make_unique_for_overwrite<Pixel_BGRA[]>(size + 8);
     memcpy(bevel_buffer.get(), utl_getpixeldata(L), sizeof(Pixel_BGRA) * size);
 
     //辺は滑らかになるが頂点が丸くなるので一長一短
