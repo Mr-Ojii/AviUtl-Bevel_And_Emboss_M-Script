@@ -332,7 +332,7 @@ int bevel_and_emboss(lua_State *L) {
 
     //rikky_module.bordering
     std::vector< std::vector<Point> > p;
-    int border_i = 0;
+    size_t border_i = 0;
     while(1)
     {
         std::vector<Point> pb;
@@ -428,10 +428,10 @@ int bevel_and_emboss(lua_State *L) {
     //輪郭平滑化処理
     //謎の定数（根拠無し)
     double hoge = 0.8;
-    for(int i = 0; i < p.size(); i++) {
+    for(size_t i = 0; i < p.size(); i++) {
         auto& pi = p[i];
         double bufx = pi[0].x, bufy = pi[0].y;
-        for(int j = 1; j < pi.size(); j++) {
+        for(size_t j = 1; j < pi.size(); j++) {
             double x0 = pi[j].x, y0 = pi[j].y, x1 = pi[(j + 1) % pi.size()].x, y1 = pi[(j + 1) % pi.size()].y;
             if(squared(x0 * 2 - bufx - x1) + squared(y0 * 2 - bufy - y1) < hoge) {
                 pi[j].x = x0 / 2 + bufx / 4 + x1 / 4;
@@ -464,9 +464,9 @@ int bevel_and_emboss(lua_State *L) {
 
     //ここまでで補正した輪郭線を使って立体化を作れば、側面がそこそこ滑らかな立体が出来ると思う
 
-    for(int i = 0; i < p.size(); i++) {
+    for(size_t i = 0; i < p.size(); i++) {
         auto& pi = p[i];
-        for(int j = 0; j < pi.size(); j++) {
+        for(size_t j = 0; j < pi.size(); j++) {
             double x0 = pi[j].x, y0 = pi[j].y, x1 = pi[(j + 1) % pi.size()].x, y1  = pi[(j + 1) % pi.size()].y;
             double dx = x1 - x0, dy = y1 - y0;
             int xmin = std::floor(std::max(1.0,std::min(x0,x1)-bev_w));
