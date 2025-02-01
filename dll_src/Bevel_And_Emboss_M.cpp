@@ -191,8 +191,10 @@ inline std::tuple<double, double, double> distance_line(double x, double y, doub
 {
     //t<=0については、次のループで上書きされるので計算の必要無し
     double t = std::min(1.0, (dx * (x - x0) + dy * (y - y0)) / (dx * dx + dy * dy));
+
     //そもそもt<=0となるピクセルはifで弾いてる
-    return std::make_tuple(std::abs(squared(x0 + dx * t - x) + squared(y0 + dy * t - y)), x0 + dx * t, y0 + dy * t);
+    //2乗 + 2乗 は必ず正になるため、std::absは必要なし
+    return std::make_tuple(squared(x0 + dx * t - x) + squared(y0 + dy * t - y), x0 + dx * t, y0 + dy * t);
 }
 
 static decltype(AviUtl::ExFunc::exec_multi_thread_func) exec_multi_thread_func = nullptr;
