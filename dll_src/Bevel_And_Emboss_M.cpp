@@ -187,6 +187,7 @@ inline void utl_temptarget(lua_State *L, int w, int h) {
 }
 
 static decltype(AviUtl::ExFunc::exec_multi_thread_func) exec_multi_thread_func = nullptr;
+static int* utl_thread_count = nullptr;
 static bool first = true;
 
 static HMODULE get_utl_module() {
@@ -196,8 +197,11 @@ static HMODULE get_utl_module() {
     return module;
 }
 
-static void multi_thread(std::function<void(int, int)>&& f, bool single = false) {
-    if (exec_multi_thread_func && !single) {
+static void multi_thread(std::function<void(int, int)>&& f, int request_thread_num = 0) {
+    // request_thread_num <= 0 なら、 Auto とみなしてマルチスレッド実行
+    // utl_thread_count <= request_thread_num ならマルチスレッド実行
+
+    if (exec_multi_thread_func && (request_thread_num <= 0 || *utl_thread_count < request_thread_num)) {
         exec_multi_thread_func([](int thread_id, int thread_num, void* param1, void* param2) {
             (*reinterpret_cast<std::function<void(int, int)>*>(param1))(thread_id, thread_num);
         }, &f, nullptr);
@@ -214,9 +218,7 @@ int bevel_and_emboss(lua_State *L) {
         if (aviutl_base) {
             if (!strncmp(aviutl_base + 0x0007425c, aviutl_version.data(), aviutl_version.size())) {
                 exec_multi_thread_func = reinterpret_cast<decltype(exec_multi_thread_func)>(aviutl_base + 0x00022220);
-                if (!exec_multi_thread_func) {
-                    fprintf(stderr, "Bevel_And_Emboss_M: マルチスレッド関数の取得に失敗しました。マルチスレッド機能を無効化します。\n");
-                }
+                utl_thread_count = reinterpret_cast<int*>(aviutl_base + 0x002c4690);
             } else {
                 fprintf(stderr, "Bevel_And_Emboss_M: マルチスレッド機能は AviUtl version 1.10 でのみ使用できます。マルチスレッド機能を無効化します。");
             }
