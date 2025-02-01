@@ -201,7 +201,7 @@ static void multi_thread(std::function<void(int, int)>&& f, int request_thread_n
     // request_thread_num <= 0 なら、 Auto とみなしてマルチスレッド実行
     // utl_thread_count <= request_thread_num ならマルチスレッド実行
 
-    if (exec_multi_thread_func && (request_thread_num <= 0 || *utl_thread_count < request_thread_num)) {
+    if (exec_multi_thread_func && (request_thread_num <= 0 || *utl_thread_count <= request_thread_num)) {
         exec_multi_thread_func([](int thread_id, int thread_num, void* param1, void* param2) {
             (*reinterpret_cast<std::function<void(int, int)>*>(param1))(thread_id, thread_num);
         }, &f, nullptr);
