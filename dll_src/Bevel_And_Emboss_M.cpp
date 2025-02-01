@@ -186,17 +186,6 @@ inline void utl_temptarget(lua_State *L, int w, int h) {
     lua_call(L, 4, 0);
 }
 
-//点[x,y]から最も近い線分[x0,y0]:[x0+dx,y0+dy]上の点の、距離の2乗と座標を返す関数
-inline std::tuple<double, double, double> distance_line(double x, double y, double x0, double y0, double dx, double dy)
-{
-    //t<=0については、次のループで上書きされるので計算の必要無し
-    double t = std::min(1.0, (dx * (x - x0) + dy * (y - y0)) / (dx * dx + dy * dy));
-
-    //そもそもt<=0となるピクセルはifで弾いてる
-    //2乗 + 2乗 は必ず正になるため、std::absは必要なし
-    return std::make_tuple(squared(x0 + dx * t - x) + squared(y0 + dy * t - y), x0 + dx * t, y0 + dy * t);
-}
-
 static decltype(AviUtl::ExFunc::exec_multi_thread_func) exec_multi_thread_func = nullptr;
 static bool first = true;
 
@@ -483,13 +472,24 @@ int bevel_and_emboss(lua_State *L) {
                     //ポインタ渡し
                     Pixel_Info* info = &pix_info[y*w+x];
                     //[x0,y0]より向こう側については計算の必要無し（次のループで計算される）
-                    if(dx * (x_ul - x0) > dy * (y0 - y_ul)) {
-                        std::tuple<double, double, double> ret = distance_line(x_ul, y_ul, x0, y0, dx, dy);
+                    double x_i = dx * (x_ul - x0);
+                    double y_i = dy * (y0 - y_ul);
+                    if(x_i > y_i) {
+                        //t<=0については、次のループで上書きされるので計算の必要無し
+                        double t = std::min(1.0, (x_i - y_i) / (dx * dx + dy * dy));
+
+                        //点[x,y]から最も近い線分[x0,y0]:[x0+dx,y0+dy]上の点の、距離の2乗(dis_t)と座標(x_t, y_t)
+                        //そもそもt<=0となるピクセルはifで弾いてる
+                        double x_t = x0 + dx * t;
+                        double y_t = y0 + dy * t;
+                        //2乗 + 2乗 は必ず正になるため、std::absは必要なし
+                        double dis_t = squared(x_t - x_ul) + squared(y_t - y_ul);
+
                         //比較段階ではmath.sqrt()を使う必要はない
-                        if(info->dis > std::get<0>(ret)) {
-                            info->dis = std::get<0>(ret);
-                            info->x = std::get<1>(ret);
-                            info->y = std::get<2>(ret);
+                        if(info->dis > dis_t) {
+                            info->dis = dis_t;
+                            info->x = x_t;
+                            info->y = y_t;
                             //輪郭線の内外判定（真理値で保持するより減算した方が速かった、当然か）
                             info->line = dy * (x_ul - x0) - dx * (y_ul - y0);
                         }
