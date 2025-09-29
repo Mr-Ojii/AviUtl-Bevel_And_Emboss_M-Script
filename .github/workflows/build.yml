@@ -24,7 +24,7 @@ jobs:
       with:
         arch: x86
 
-    - uses: leafo/gh-actions-lua@v11
+    - uses: leafo/gh-actions-lua@v12
       with:
         luaVersion: 5.1.5
 
